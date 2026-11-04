@@ -25,3 +25,5 @@ There are no hooks and no telemetry.
 ## License
 
 MIT. Source and documentation: https://github.com/thomasog/coldstart
+
+[Privacy](PRIVACY.md)

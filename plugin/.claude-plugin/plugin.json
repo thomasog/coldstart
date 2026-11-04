@@ -12,5 +12,6 @@
     "setup",
     "handoff",
     "memory"
-  ]
+  ],
+  "privacyPolicyUrl": "https://github.com/thomasog/coldstart/blob/main/plugin/PRIVACY.md"
 }
