@@ -1,0 +1,13 @@
+{
+  "name": "thomasog-plugins",
+  "owner": {
+    "name": "thomasog"
+  },
+  "description": "Plugins by thomasog.",
+  "plugins": [
+    {
+      "name": "coldstart",
+      "source": "./"
+    }
+  ]
+}

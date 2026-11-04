@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: code-repo-with-claude-md
+expected_outcome: |
+  The old CLAUDE.md is merged and moved; the code is neither read nor run.
+context:
+  scaffold_script: place-files.sh

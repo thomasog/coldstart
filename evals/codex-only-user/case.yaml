@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: codex-only-user
+expected_outcome: |
+  The folder works with AGENTS.md and .ai/ alone, with nothing specific to Claude.
+context:
+  scaffold_script: place-files.sh

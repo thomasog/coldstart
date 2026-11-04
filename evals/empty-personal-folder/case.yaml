@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: empty-personal-folder
+expected_outcome: |
+  Exactly the planned files exist, holding only what the user said.

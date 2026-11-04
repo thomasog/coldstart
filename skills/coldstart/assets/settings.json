@@ -1,0 +1,14 @@
+{
+  "plansDirectory": "./.ai/plans",
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(!.env.example)"
+    ]
+  }
+}
