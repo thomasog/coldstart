@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" width="88" alt="">
+![coldstart icon](assets/icon.png)
 
 # coldstart
 
@@ -11,12 +11,11 @@ The next agent picks up where the last one stopped, on any machine.
 [![Release](https://img.shields.io/github/v/release/thomasog/coldstart)](https://github.com/thomasog/coldstart/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-</div>
+![Animation of a folder of loose files. An agent runs coldstart, AGENTS.md and a .ai folder appear beside the unchanged files, and a later session resumes from the handoff.](assets/demo.gif)
 
-<p align="center">
-  <img src="assets/demo.gif" width="760" alt="Animation of a folder of loose files. An agent runs coldstart, AGENTS.md and a .ai folder appear beside the unchanged files, and a later session resumes from the handoff.">
-  <br><sub>An illustration of a typical run, not a screen recording.</sub>
-</p>
+<sub>An illustration of a typical run, not a screen recording.</sub>
+
+</div>
 
 ## Why
 
