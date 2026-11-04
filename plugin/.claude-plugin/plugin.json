@@ -1,0 +1,16 @@
+{
+  "name": "coldstart",
+  "version": "1.1.0",
+  "description": "Get any folder ready for AI agents, once.",
+  "author": {
+    "name": "thomasog"
+  },
+  "repository": "https://github.com/thomasog/coldstart",
+  "license": "MIT",
+  "keywords": [
+    "agents-md",
+    "setup",
+    "handoff",
+    "memory"
+  ]
+}

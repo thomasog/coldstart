@@ -7,12 +7,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests
 
   hygiene:
@@ -22,6 +23,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: No personal paths
-        run: "! git grep -nE '[A-Za-z]:.Users.[a-z]' -- skills evals README.md"
+        run: "! git grep -nE '[A-Za-z]:.Users.[a-z]' -- plugin evals README.md"
       - name: One human author
         run: "! git log --format=%B | grep -qi 'co-authored-by'"

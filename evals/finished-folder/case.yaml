@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: finished-folder
+expected_outcome: |
+  The folder is already set up, so the skill only checks it and stops.
+context:
+  scaffold_script: place-files.sh

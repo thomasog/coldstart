@@ -1,5 +1,0 @@
-.ai/scratch/
-.claude/settings.local.json
-.env
-.env.*
-!.env.example

@@ -44,6 +44,8 @@ Run coldstart in a code repo or in a personal project such as a move, a trip or 
         └── advisor.md     # strong second opinion for hard calls
 ```
 
+Later, agents keep what they make for themselves in `.ai/` too: plans, reusable scripts, archives and scratch work.
+
 The habit that makes it work: agents read `.ai/HANDOFF.md` at the start of a session and rewrite it at the end.
 
 ## Works with
@@ -59,7 +61,7 @@ The habit that makes it work: agents read `.ai/HANDOFF.md` at the start of a ses
 Paste this into your agent:
 
 ```text
-Install the agent skill in skills/coldstart from https://github.com/thomasog/coldstart, then tell me how to run it.
+Install the agent skill in plugin/skills/coldstart from https://github.com/thomasog/coldstart, then tell me how to run it.
 ```
 
 Or use a command:
@@ -82,24 +84,24 @@ claude plugin marketplace add thomasog/coldstart
 claude plugin install coldstart@thomasog-plugins
 ```
 
-**By hand:** copy `skills/coldstart/` to `~/.agents/skills/`, or to `~/.claude/skills/` for Claude Code.
+**By hand:** copy `plugin/skills/coldstart/` to `~/.agents/skills/`, or to `~/.claude/skills/` for Claude Code.
+
+Python 3.10 or later makes the setup faster, and git is optional. Without Python, the agent does the same steps by hand.
 
 ## Use
 
-Ask for it by name: `/coldstart` in Claude Code, `$coldstart` in Codex, or "run coldstart" anywhere. It never starts on its own. If the folder has no git, start your agent from the folder itself.
+Ask for it by name: `/coldstart` in Claude Code, `$coldstart` in Codex, or "run coldstart" anywhere. It never starts on its own. In a folder that is already set up, it only checks the files and stops.
+
+If you don't use git, start your agent from the folder itself, so it finds `AGENTS.md`.
 
 ## What it reads, writes and runs
 
 - **Reads:** file names, agent instruction files such as `CLAUDE.md`, and project manifests such as `package.json`. Nothing outside the folder.
-- **Writes:** the files above, and nothing else. It moves old instruction files to `.ai/scratch/` instead of deleting them, and shows you any command, URL or install step they contain first.
-- **Runs:** `skills/coldstart/scripts/coldstart.py`, a short Python script that uses only the standard library, makes no network calls and asks no questions. Without Python, the agent does the same steps by hand.
-- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, so memory stays in `.ai/memory/`. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. The same file blocks reading `.env` files.
+- **Writes:** the files above, and nothing else. It moves an old root `CLAUDE.md` or `AGENTS.override.md` to `.ai/archive/` instead of deleting it, and shows you any command, URL or install step in old instructions first.
+- **Runs:** `coldstart.py`, a short Python script that uses only the standard library, makes no network calls and asks no questions. It runs `git init` only if you ask for git.
+- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand.
 
 There are no hooks and no telemetry.
-
-## Upgrading
-
-Early versions kept their state in `.agents/`, which Codex treats as read-only. Run coldstart in that folder: it shows what would move to `.ai/` and waits for your OK.
 
 ## Why not something else?
 
@@ -109,9 +111,9 @@ Early versions kept their state in `.agents/`, which Codex treats as read-only. 
 
 ## Evidence
 
-The [`evals/`](evals/) folder holds five fictional cases, including a folder with a deadline in a filename. In one run per case on Claude Code, all 31 checks pass. An earlier version without these limits passed 0 of 6 checks on that folder: it opened the documents and started the project's work.
+The [`evals/`](evals/) folder holds five fictional cases, including a folder with a deadline in a filename. In one run per case on Claude Code, all 29 checks pass. An earlier version without these limits failed every check on that folder: it opened the documents and started the project's work.
 
-`python -m unittest discover -s tests` runs the script's tests.
+`python -m unittest discover -s tests` runs the script's tests. The reasoning behind each choice is in [`rationale.md`](plugin/skills/coldstart/references/rationale.md).
 
 ## License
 
