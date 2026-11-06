@@ -1,13 +1,3 @@
 # Memory
 
-One line per memory: `- [Title](slug.md) — hook`. Keep this index short: it loads every session. Each memory is one fact in its own file:
-
-```
----
-type: user | feedback | project | reference
-source: <who said it>
-checked: YYYY-MM-DD
----
-<The fact, with absolute dates. For feedback and project: why it matters, and how to apply it.>
-```
-
+Durable facts only, one line each: `- YYYY-MM-DD fact (source)`. When a fact changes, rewrite its line and add `Was: old value until YYYY-MM-DD.` A note too long for a line goes in its own file here, linked from its line. Keep this under 50 lines.

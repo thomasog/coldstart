@@ -2,6 +2,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -15,7 +16,7 @@ coldstart = importlib.util.module_from_spec(spec)
 sys.modules["coldstart"] = coldstart
 spec.loader.exec_module(coldstart)
 
-FINISHED_AGENTS = "# Move\n\nDone when moved.\n\n<!-- coldstart 1.1 -->\n"
+FINISHED_AGENTS = "# Move\n\nStart by reading `.ai/HANDOFF.md`.\n"
 IMPORTS = "\n".join(coldstart.IMPORTS) + "\n"
 
 
@@ -45,36 +46,42 @@ class FolderTest(unittest.TestCase):
 
 
 class Scan(FolderTest):
-    def test_reports_a_personal_folder(self):
+    def test_lists_names_and_skips_dependencies(self):
         self.write("contract.pdf")
+        self.write("node_modules/dep/index.js")
         code, report = self.run_cli("scan")
         self.assertEqual(code, 0)
-        self.assertEqual(report["kind"], "personal")
         self.assertFalse(report["configured"])
         self.assertEqual(report["files"], ["contract.pdf"])
 
-    def test_reports_code_and_its_scripts(self):
-        self.write("package.json", '{"scripts": {"test": "node --test"}}')
-        self.write("node_modules/dep/index.js")
-        _, report = self.run_cli("scan")
-        self.assertEqual(report["kind"], "code")
-        self.assertEqual(report["scripts"], {"test": "node --test"})
-        self.assertEqual(report["files"], ["package.json"])
-
-    def test_reads_a_manifest_with_a_bom(self):
-        (self.root / "package.json").write_bytes(b'\xef\xbb\xbf{"scripts": {"test": "x"}}')
-        self.assertEqual(self.run_cli("scan")[1]["scripts"], {"test": "x"})
-
-    def test_survives_an_unreadable_manifest(self):
-        (self.root / "package.json").write_bytes(b"\xff\xfe not json")
-        self.assertEqual(self.run_cli("scan")[1]["scripts"], {})
-
     def test_finds_instructions_and_a_configured_folder(self):
         self.write("CLAUDE.md")
-        self.write(".ai/HANDOFF.md")
+        self.finished_folder()
         _, report = self.run_cli("scan")
-        self.assertEqual(report["instructions"], ["CLAUDE.md"])
+        self.assertEqual(report["instructions"], ["AGENTS.md", "CLAUDE.md"])
         self.assertTrue(report["configured"])
+
+    def test_a_partial_folder_is_not_configured(self):
+        self.write(".ai/HANDOFF.md")
+        self.assertFalse(self.run_cli("scan")[1]["configured"])
+
+    def test_names_executable_config_but_not_the_codex_folder(self):
+        self.write(".mcp.json")
+        self.write(".codex/report.md")
+        self.assertEqual(self.run_cli("scan")[1]["instructions"], [".mcp.json"])
+
+    def test_finds_the_repository_above_a_subfolder(self):
+        (self.root / ".git").mkdir()
+        subfolder = self.root / "packages/foo"
+        subfolder.mkdir(parents=True)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            coldstart.main(["scan", str(subfolder)])
+        self.assertEqual(json.loads(out.getvalue())["git"], str(self.root.resolve()))
+
+    def test_finds_rules_under_the_agents_folder(self):
+        self.write(".agents/rules/style.md")
+        self.assertEqual(self.run_cli("scan")[1]["instructions"], [".agents/rules"])
 
     def test_truncates_a_huge_folder(self):
         with mock.patch.object(coldstart, "MAX_FILES", 3):
@@ -98,7 +105,7 @@ class Scan(FolderTest):
 
         with mock.patch.object(Path, "read_text", spy):
             self.run_cli("scan")
-        self.assertEqual(set(opened), {"package.json"})
+        self.assertEqual(opened, [])
 
 
 class Init(FolderTest):
@@ -136,31 +143,59 @@ class Init(FolderTest):
         self.assertFalse((self.root / ".ai").exists())
         self.assertFalse((self.root / ".claude/CLAUDE.md").exists())
 
+    def test_a_list_of_the_wrong_shape_stops_before_any_write(self):
+        self.write(".claude/settings.json", '{"permissions": {"deny": null}}')
+        code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 2)
+        self.assertIn("error", report)
+        self.assertFalse((self.root / ".ai").exists())
+
+    def test_keeps_non_ascii_settings_readable(self):
+        self.write(".claude/settings.json", '{"plansDirectory": "./planos-açaí"}')
+        self.run_cli("init", "--claude")
+        self.assertIn("açaí", self.read(".claude/settings.json"))
+
+    def test_the_settings_template_holds_nothing_that_runs(self):
+        settings = json.loads((coldstart.ASSETS / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(settings), {"plansDirectory", "autoMemoryEnabled", "permissions"})
+
     def test_a_non_utf8_gitignore_stops_before_any_write(self):
         (self.root / ".gitignore").write_bytes(b"caf\xe9\n")
-        self.assertEqual(self.run_cli("init", "--git")[0], 2)
+        self.assertEqual(self.run_cli("init", "--gitignore")[0], 2)
         self.assertEqual((self.root / ".gitignore").read_bytes(), b"caf\xe9\n")
         self.assertFalse((self.root / ".ai").exists())
 
-    def test_appends_only_missing_gitignore_lines(self):
+    def test_adds_only_missing_gitignore_lines_and_no_repository(self):
         self.write(".gitignore", ".env")
-        self.run_cli("init", "--git")
+        self.run_cli("init", "--gitignore")
         lines = self.read(".gitignore").splitlines()
         self.assertEqual(lines.count(".env"), 1)
         self.assertIn(".ai/scratch/", lines)
-        self.assertTrue((self.root / ".git").is_dir())
+        self.assertFalse((self.root / ".git").exists())
 
-    def test_stops_without_git_before_any_write(self):
-        with mock.patch.object(coldstart.shutil, "which", return_value=None):
-            code, report = self.run_cli("init", "--git", "--claude")
+    def test_a_negation_the_user_has_still_wins(self):
+        self.write(".gitignore", ".env*\n!.env.example\n")
+        self.run_cli("init", "--gitignore")
+        self.assertEqual(self.read(".gitignore").splitlines()[-1], "!.env.example")
+
+    def test_refuses_the_home_folder(self):
+        with mock.patch.object(coldstart.Path, "home", return_value=self.root):
+            code, report = self.run_cli("init", "--claude")
         self.assertEqual(code, 2)
-        self.assertIn("git is not installed", report["error"])
+        self.assertIn("home folder", report["error"])
         self.assertEqual(list(self.root.iterdir()), [])
 
-    def test_dry_run_changes_nothing(self):
-        _, report = self.run_cli("init", "--claude", "--git", "--dry-run")
-        self.assertIn(".claude/CLAUDE.md", report["created"])
-        self.assertEqual(list(self.root.iterdir()), [])
+    def test_refuses_a_link_that_leads_outside(self):
+        outside = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, outside, ignore_errors=True)
+        try:
+            (self.root / ".claude").symlink_to(outside, target_is_directory=True)
+        except OSError:
+            self.skipTest("this system can't create links")
+        code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 2)
+        self.assertIn("leads outside", report["error"])
+        self.assertEqual(list(outside.iterdir()), [])
 
 
 class Check(FolderTest):
@@ -188,10 +223,19 @@ class Check(FolderTest):
         shutil.copy(coldstart.ASSETS / "MEMORY.md", self.root / ".ai/memory/MEMORY.md")
         self.assertEqual(self.run_cli("check")[0], 0)
 
-    def test_flags_absolute_paths(self):
+    def test_flags_paths_from_this_machine_however_they_are_written(self):
+        if len(Path.home().parts) <= 2:
+            self.skipTest("a home this short is ignored on purpose")
+        home = Path.home().as_posix().split(":")[-1]
+        for path in (str(Path.home()), str(Path.home()).lower(), f"/c{home}", f"/mnt/c{home}"):
+            self.finished_folder()
+            self.write("AGENTS.md", FINISHED_AGENTS + f"See {path}/file\n")
+            self.assert_problem("path from this machine")
+
+    def test_allows_paths_that_belong_to_the_project(self):
         self.finished_folder()
-        self.write("AGENTS.md", FINISHED_AGENTS + "See C:\\Users\\ana\\file\n")
-        self.assert_problem("absolute path")
+        self.write("AGENTS.md", FINISHED_AGENTS + "WORKDIR /srv/node/app, GET /Users/:id, https://x.com/home/page\n")
+        self.assertEqual(self.run_cli("check")[0], 0)
 
     def test_allows_ordinary_angle_brackets_and_urls(self):
         self.finished_folder()
@@ -199,37 +243,50 @@ class Check(FolderTest):
         self.write("AGENTS.md", FINISHED_AGENTS + extra)
         self.assertEqual(self.run_cli("check"), (0, {"ok": True, "problems": []}))
 
-    def test_flags_a_missing_marker_and_length(self):
+    def test_flags_a_translated_placeholder(self):
+        self.finished_folder()
+        self.write("AGENTS.md", FINISHED_AGENTS + "<Área de atuação>\n")
+        self.assert_problem("unfilled placeholder")
+
+    def test_flags_a_missing_pointer_and_length(self):
         self.finished_folder()
         self.write("AGENTS.md", "line\n" * 130)
-        self.assert_problem("no version marker")
+        self.assert_problem("does not point to .ai/HANDOFF.md")
         self.assert_problem("over 120 lines")
 
-    def test_flags_files_that_should_have_moved(self):
+    def test_flags_an_override_that_shadows_agents_md(self):
         self.finished_folder()
-        self.write("CLAUDE.md")
-        self.assert_problem("move to .ai/archive/")
+        self.write("AGENTS.override.md")
+        self.assert_problem("move to .ai/archive/: AGENTS.override.md")
 
-    def test_flags_a_long_memory_index(self):
+    def test_flags_a_long_memory(self):
         self.finished_folder()
-        self.write(".ai/memory/MEMORY.md", "- [x](x.md) - y\n" * 51)
-        self.assert_problem("memory index is over 50 entries")
+        self.write(".ai/memory/MEMORY.md", "- 2026-11-05 fact (me)\n" * 51)
+        self.assert_problem("MEMORY.md is over 50 entries")
 
-    def test_verifies_the_claude_imports_and_settings(self):
+    def full_adapter(self):
         self.finished_folder()
-        self.write(".claude/CLAUDE.md", "@../AGENTS.md\n")
-        self.assert_problem("missing import in .claude/CLAUDE.md: @../.ai/HANDOFF.md")
-        self.assert_problem("missing: .claude/settings.json")
-
-    def test_ignores_a_claude_folder_without_the_adapter(self):
-        self.finished_folder()
-        self.write(".claude/notes.txt")
-        self.assertEqual(self.run_cli("check")[0], 0)
+        for target in coldstart.ADAPTER.values():
+            self.write(target, "{}")
+        self.write(".claude/CLAUDE.md", IMPORTS)
 
     def test_passes_a_folder_with_a_complete_adapter(self):
+        self.full_adapter()
+        self.assertEqual(self.run_cli("check")[0], 0)
+
+    def test_verifies_the_adapter_it_finds(self):
+        self.full_adapter()
+        self.write(".claude/CLAUDE.md", "@../AGENTS.md\n")
+        (self.root / ".claude/settings.json").unlink()
+        self.write("CLAUDE.md")
+        self.assert_problem("missing import in .claude/CLAUDE.md: @../.ai/HANDOFF.md")
+        self.assert_problem("missing: .claude/settings.json")
+        self.assert_problem("move to .ai/archive/: CLAUDE.md")
+
+    def test_leaves_a_teammates_claude_files_alone(self):
         self.finished_folder()
-        self.write(".claude/CLAUDE.md", IMPORTS)
-        self.write(".claude/settings.json", "{}")
+        self.write("CLAUDE.md")
+        self.write(".claude/CLAUDE.md", "their notes\n")
         self.assertEqual(self.run_cli("check")[0], 0)
 
     def test_reports_an_undecodable_file_without_changing_it(self):
@@ -237,6 +294,15 @@ class Check(FolderTest):
         (self.root / "AGENTS.md").write_bytes(b"caf\xe9\n")
         self.assertEqual(self.run_cli("check")[0], 2)
         self.assertEqual((self.root / "AGENTS.md").read_bytes(), b"caf\xe9\n")
+
+
+class Release(unittest.TestCase):
+    def test_every_version_matches(self):
+        repo = SCRIPT.parents[4]
+        plugin = json.loads((repo / "plugin/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+        skill = re.search(r'version: "(.+)"', (repo / "plugin/skills/coldstart/SKILL.md").read_text(encoding="utf-8")).group(1)
+        changelog = re.search(r"^## (\S+)", (repo / "CHANGELOG.md").read_text(encoding="utf-8"), re.M).group(1)
+        self.assertEqual({plugin, skill, changelog}, {plugin})
 
 
 class Cli(unittest.TestCase):

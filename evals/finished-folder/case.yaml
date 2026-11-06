@@ -1,6 +1,51 @@
 schema_version: "1.1"
 name: finished-folder
+tags: [coldstart]
+plugins: ["../../plugin"]
 expected_outcome: |
   The folder is already set up, so the skill only checks it and stops.
 context:
   scaffold_script: place-files.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
+  prompt: |
+    run coldstart in this folder
+
+    There is no live user. Treat this as the reply to anything you need to ask: Nothing else to add.
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+    input_match: coldstart
+  - name: nothing-written
+    type: tool_used
+    tool: Write
+    min: 0
+    max: 0
+  - name: nothing-edited
+    type: tool_used
+    tool: Edit
+    min: 0
+    max: 0
+  - name: no-setup-questions
+    type: regex
+    pattern: '\?'
+    match: not_contains
+  - name: check-was-run
+    type: tool_used
+    tool: Bash
+    input_match: 'coldstart\.py.*check'
+  - name: itinerary-not-read
+    type: tool_used
+    tool: Read
+    input_match: 'itinerary\.txt'
+    min: 0
+    max: 0
+  - name: itinerary-not-read-by-shell
+    type: tool_used
+    tool: Bash
+    input_match: 'itinerary\.txt'
+    min: 0
+    max: 0

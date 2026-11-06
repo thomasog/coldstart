@@ -1,8 +1,5 @@
 # Handoff
-_Updated: YYYY-MM-DD_
-
-## Focus
-<What we are working toward right now, in one line.>
+_Updated: <date of this rewrite>_
 
 ## State
 <What is done, what is half-done (exact files), what was verified and how.>

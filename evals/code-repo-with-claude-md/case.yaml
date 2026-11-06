@@ -1,6 +1,57 @@
 schema_version: "1.1"
 name: code-repo-with-claude-md
+tags: [coldstart]
+plugins: ["../../plugin"]
 expected_outcome: |
   The old CLAUDE.md is merged and moved; the code is neither read nor run.
 context:
   scaffold_script: place-files.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
+  prompt: |
+    use the coldstart skill in this repo
+
+    There is no live user. Treat this as the reply to anything you need to ask: Goal: the mini-calc library, done when npm test and npm run lint pass. People and deadlines: nothing to add, it is just me. First task: fix the failing test. Agents: Claude Code. Verification: the commands you found are right. Git: no. Plan: approved.
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+    input_match: coldstart
+  - name: old-file-archived
+    type: file_exists
+    path: ".ai/archive/*CLAUDE*"
+  - name: old-rules-merged-once
+    type: llm
+    focus: { source: file, path: AGENTS.md }
+    criteria: AGENTS.md carries all three old rules (pure functions in src/, no new dependencies without asking, camelCase names), each once.
+  - name: done-when-lists-commands
+    type: regex
+    target: { source: file, path: AGENTS.md }
+    pattern: 'npm test[\s\S]*npm run lint|npm run lint[\s\S]*npm test'
+  - name: code-not-run
+    type: tool_used
+    tool: Bash
+    input_match: 'npm (run )?(test|lint)|node --test|eslint'
+    min: 0
+    max: 0
+  - name: code-not-read
+    type: tool_used
+    tool: Read
+    input_match: '(src|test)/index'
+    min: 0
+    max: 0
+  - name: code-not-read-by-shell
+    type: tool_used
+    tool: Bash
+    input_match: '(src|test)/index'
+    min: 0
+    max: 0
+  - name: closing-message
+    type: llm
+    criteria: The closing message has at most 4 lines and offers no further work.
+  - name: check-passes
+    type: regex
+    target: trace
+    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems'

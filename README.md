@@ -34,10 +34,10 @@ Run coldstart in a code repo or in a personal project such as a move, a trip or 
 ├── .ai/
 │   ├── HANDOFF.md         # where we stopped and what comes next
 │   └── memory/
-│       └── MEMORY.md      # index of durable facts
-├── .gitignore             # only if you want git
+│       └── MEMORY.md      # durable facts
+├── .gitignore             # only if the folder is or will be in git
 └── .claude/               # only if you use Claude Code
-    ├── CLAUDE.md          # imports AGENTS.md, the handoff and the memory index
+    ├── CLAUDE.md          # imports AGENTS.md, the handoff and the memory
     ├── settings.json      # keeps plans and memory inside the folder
     └── agents/
         ├── scout.md       # fast and cheap: search, read, bulk vision
@@ -58,7 +58,7 @@ The habit that makes it work: agents read `.ai/HANDOFF.md` at the start of a ses
 
 ## Install
 
-Paste this into your agent:
+Read `SKILL.md` and `scripts/` before installing, as with any skill. Then paste this into your agent:
 
 ```text
 Install the agent skill in plugin/skills/coldstart from https://github.com/thomasog/coldstart, then tell me how to run it.
@@ -84,34 +84,40 @@ claude plugin marketplace add thomasog/coldstart
 claude plugin install coldstart@thomasog-plugins
 ```
 
-**By hand:** copy `plugin/skills/coldstart/` to `~/.agents/skills/`, or to `~/.claude/skills/` for Claude Code.
+Update it with `claude plugin update coldstart@thomasog-plugins`.
 
-Python 3.10 or later makes the setup faster, and git is optional. Without Python, the agent does the same steps by hand.
+**By hand:** copy `plugin/skills/coldstart/` to `~/.claude/skills/` for Claude Code, `~/.gemini/config/skills/` for Antigravity, or `~/.agents/skills/` for Codex, Cursor, Copilot and Gemini CLI.
+
+Python 3.9 or later makes the setup faster, and git is optional. Without Python, the agent does the same steps by hand.
 
 ## Use
 
 Ask for it by name: `/coldstart` in Claude Code, `$coldstart` in Codex, or "run coldstart" anywhere. It never starts on its own. In a folder that is already set up, it only checks the files and stops.
 
-If you don't use git, start your agent from the folder itself, so it finds `AGENTS.md`.
+Start your agent from the folder itself, not a subfolder: without git, Codex finds `AGENTS.md` only there, and Claude Code asks before loading the adapter's imports from a subfolder.
 
 ## What it reads, writes and runs
 
-- **Reads:** file names, agent instruction files such as `CLAUDE.md`, and project manifests such as `package.json`. Nothing outside the folder.
-- **Writes:** the files above, and nothing else. It moves an old root `CLAUDE.md` or `AGENTS.override.md` to `.ai/archive/` instead of deleting it, and shows you any command, URL or install step in old instructions first.
-- **Runs:** `coldstart.py`, a short Python script that uses only the standard library, makes no network calls and asks no questions. It runs `git init` only if you ask for git.
-- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand.
+- **Reads:** file names, agent instruction and config files such as `CLAUDE.md` or `.mcp.json`, and build manifests such as `package.json`. It opens no other file, and it only checks whether a parent folder is a git repository.
+- **Writes:** the files above, and nothing else. It moves `AGENTS.override.md`, and with Claude Code an old root `CLAUDE.md`, to `.ai/archive/` instead of deleting them, and shows you any command, URL, install step, hook or MCP server in old instructions first.
+- **Runs:** `coldstart.py`, a short Python script that uses only the standard library, launches no other program, makes no network calls and asks no questions. The agent runs `git init` if you ask for git.
+- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. The `advisor` agent runs on the strongest model you can reach, which can bill usage credits.
 
 There are no hooks and no telemetry.
 
 ## Why not something else?
 
 - **`/init`** writes an instruction file for a code repo. It doesn't set up a handoff or memory, and it isn't meant for personal folders.
-- **Cowork Projects** are a good fit if you stay in Cowork. Their state lives in your account, not in the folder.
+- **Cowork Projects** are a good fit if you stay in Cowork. Their instructions and memory stay in the desktop app on one computer, not in the folder.
 - **project-butler and project-continuity** give coding agents an ongoing memory workflow. coldstart runs once, works outside code too, and leaves plain files with nothing else to keep running.
 
 ## Evidence
 
-The [`evals/`](evals/) folder holds five fictional cases, including a folder with a deadline in a filename. In one run per case on Claude Code, all 29 checks pass. An earlier version without these limits failed every check on that folder: it opened the documents and started the project's work.
+The [`evals/`](evals/) folder holds fictional cases for `claude plugin eval`, including a folder with a deadline in a filename and one with hostile old instructions. They need Linux, macOS or WSL2 and use your plan or API credits. Results per release are in the [changelog](CHANGELOG.md).
+
+```bash
+claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit
+```
 
 `python -m unittest discover -s tests` runs the script's tests. The reasoning behind each choice is in [`rationale.md`](plugin/skills/coldstart/references/rationale.md).
 

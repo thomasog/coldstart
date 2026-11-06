@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 - 2026-11-05
+
+- `scan` works by name only and opens no file; it reports the enclosing git repository and active config such as `.mcp.json`, hooks and `.agents/rules`.
+- The script launches no other program: `--git` becomes `--gitignore`, and the agent runs `git init`.
+- Runs on Python 3.9, refuses the home folder and links that lead outside the folder, and returns a clean error on malformed settings.
+- `check` compares against this machine's real paths, verifies the adapter only where it exists, and no longer needs a version marker.
+- The template loses `## Models`, `## Map` and the marker, and gains a rule against storing secrets. Memory facts are single lines in `MEMORY.md`.
+- `scout` is the default for images and has no network tools. `advisor` runs on `best`, the strongest model available, which can bill usage credits.
+- Evals move to one `case.yaml` per case, with mechanical graders and two new cases.
+- Folders already set up keep their files: `init` never overwrites them.
+
 ## 1.1.0 - 2026-11-04
 
 - Stops at a check in a folder that is already set up, so the live handoff can't be overwritten.

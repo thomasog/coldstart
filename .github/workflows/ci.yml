@@ -2,12 +2,15 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.10", "3.13"]
+        python: ["3.9", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -25,4 +28,9 @@ jobs:
       - name: No personal paths
         run: "! git grep -nE '[A-Za-z]:.Users.[a-z]' -- plugin evals README.md"
       - name: One human author
-        run: "! git log --format=%B | grep -qi 'co-authored-by'"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DEFAULT: origin/${{ github.event.repository.default_branch }}
+        run: |
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || BASE=$DEFAULT
+          ! git log --format=%B "$BASE..HEAD" | grep -qi 'co-authored-by'

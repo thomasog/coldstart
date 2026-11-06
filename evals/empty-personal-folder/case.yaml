@@ -1,4 +1,45 @@
 schema_version: "1.1"
 name: empty-personal-folder
+tags: [coldstart]
+plugins: ["../../plugin"]
 expected_outcome: |
   Exactly the planned files exist, holding only what the user said.
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
+  prompt: |
+    run coldstart for this project, it is my apartment move
+
+    There is no live user. Treat this as the reply to anything you need to ask: Goal: moving apartments, done when I am living there. People: me and my partner, Ana. Deadlines: keys on December 15. Constraints: a budget of $6,000.00. First task: get quotes from three movers. Agents: Claude Code. Verification: amounts match the contract and dates are confirmed with the movers. Git: no. Plan: approved.
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+    input_match: coldstart
+  - name: exactly-the-planned-files
+    type: regex
+    target: files
+    pattern: '^.+$'
+    flags: m
+    match: "count:7"
+  - name: no-gitignore
+    type: file_exists
+    path: .gitignore
+    exists: false
+  - name: deadlines-line
+    type: llm
+    focus: { source: file, path: AGENTS.md }
+    criteria: The Deadlines line holds only the December 15 keys date.
+  - name: next-is-the-first-task
+    type: regex
+    target: { source: file, path: .ai/HANDOFF.md }
+    pattern: 'quotes|movers'
+    flags: i
+  - name: closing-message
+    type: llm
+    criteria: The closing message has at most 4 lines, offers no further work, and tells the user to start agents from this folder.
+  - name: check-passes
+    type: regex
+    target: trace
+    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems'

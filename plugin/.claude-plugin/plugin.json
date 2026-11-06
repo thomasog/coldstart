@@ -1,10 +1,11 @@
 {
   "name": "coldstart",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Get any folder ready for AI agents, once.",
   "author": {
     "name": "thomasog"
   },
+  "homepage": "https://github.com/thomasog/coldstart",
   "repository": "https://github.com/thomasog/coldstart",
   "license": "MIT",
   "keywords": [
@@ -13,5 +14,8 @@
     "handoff",
     "memory"
   ],
+  "icon": "./icon.png",
+  "documentationUrl": "https://github.com/thomasog/coldstart#readme",
+  "supportUrl": "https://github.com/thomasog/coldstart/issues",
   "privacyPolicyUrl": "https://github.com/thomasog/coldstart/blob/main/plugin/PRIVACY.md"
 }

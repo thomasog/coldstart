@@ -1,7 +1,7 @@
 ---
 name: scout
-description: Fast, low-cost helper for simple read-only work — finding files, reading and summarizing documents, listing where something is used, extracting data from images, screenshots or receipts in bulk, quick web lookups. Use it instead of doing bulk reading on the main model. Not for judgment calls or anything where a misread number would be costly.
-tools: Read, Grep, Glob, WebSearch, WebFetch
+description: Fast, low-cost helper for simple read-only work, and the default for images — extracting data from images, screenshots, scans or receipts in bulk, finding files, reading and summarizing documents, listing where something is used. Use it instead of doing bulk reading or image reading on the main model. Not for judgment calls or anything where a misread number would be costly.
+tools: Read, Grep, Glob
 model: haiku
 omitClaudeMd: true
 ---
