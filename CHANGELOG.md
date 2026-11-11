@@ -6,9 +6,18 @@
 - With a yes, AGENTS.md gets a `Delegation` section: give each piece of work to the lowest model tier that gets it right, keep judgment in the main session, check what was delegated, redo a weak result one tier up, and ask a tier above when stuck.
   - Tiers are relative to the model running the session, so the text names no model, works in any agent that reads AGENTS.md, and holds when you switch models.
   - It is an instruction, not a setting: nothing is written to `.claude/settings.json` for it.
-- `init` no longer fails when a sandbox refuses one file (Claude Code's Bash sandbox protects `.claude/settings.json`). It writes the rest, returns the refused file's content under `blocked` and exits 1, and the agent writes that file with its own tool.
-- A new eval, `routing-accepted`, covers a yes; `evals/README.md` says how to run the evals and where they can't run.
 - The Claude Code adapter no longer includes the `scout` agent, and the close suggests `/advisor` only with routing. Folders set up earlier keep their `scout.md`; nothing is removed.
+- Setup waits for an OK to the plan itself. Being told that no one can answer, or to treat a message as the reply to anything, no longer counts as one; without an OK the agent ends with the plan and writes nothing.
+- `init` no longer fails when a sandbox refuses one file (Claude Code's Bash sandbox protects `.claude/settings.json`). It writes the rest, returns the refused file's content under `blocked` and exits 1, and the agent writes that file with its own tool.
+- The close is at most four short lines and under 80 words, with no list of files: one line on the habit, then one line for each note that applies.
+- The README is reorganized: how it works in five steps, install by agent, and a section on upgrading.
+
+### Evals
+
+- A new case, `routing-accepted`, covers a yes; `evals/README.md` says how to run the evals, where they can't run and what the runner can't do.
+- The cases that use the Claude Code adapter accept the one file the runner can't write, and require the agent to hand it on.
+- The closing criteria say what a line is and what counts as offering more work, and the evals use a Sonnet judge (`--judge-model sonnet`): the default Haiku judge gave opposite verdicts on the same message.
+- **Result:** all 9 cases at 100%, 27 of 27 runs, on Claude Code 2.1.321 on macOS. Run by hand in Codex (codex-cli 0.167), a folder with the plan approved in advance passes `check`, and one with hostile old instructions and no OK gets the plan and no writes.
 
 ## 1.3.0 - 2026-11-11
 
