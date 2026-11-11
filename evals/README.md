@@ -8,6 +8,10 @@ Each folder here is one case for `claude plugin eval`: a prompt, an optional `pl
 - **Linux and WSL2:** yes, with `bubblewrap` and `socat` installed.
 - **Windows without WSL2:** no. The cases need the Bash tool, and the runner refuses to grant it without a sandbox. A refused run still prints `score 1.00` for cases whose graders check that something did not happen, so ignore any Windows result.
 
+## Known limit: `.claude/settings.json`
+
+The Bash sandbox refuses the script's write to `.claude/settings.json`, so `init` hands that file back under `blocked`. The runner works in don't-ask mode and refuses the agent's Write as well; on 2.1.321 neither `Write(.claude/settings.json)` nor `Edit(.claude/settings.json)` in `--allow-tools` lets it through. Every case that uses the Claude Code adapter therefore ends with that file missing, and `check-passes`, `exactly-the-planned-files` and `no-advisor-setting` fail there for that reason alone. In an interactive session the Write asks the user instead.
+
 ## Steps on a Mac
 
 1. Have Claude Code installed and signed in (`claude --version`; these cases were written on 2.1.318), and `python3` on the PATH.

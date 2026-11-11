@@ -66,6 +66,7 @@ Show the tree you'll create, one line per file, and what you'll fold in or move;
 ### 4. Create
 
 - **Skeleton:** run `coldstart.py init <folder>`, adding `--claude` if the user uses Claude Code and `--gitignore` if the folder is or will be in git; then run `git init` yourself if they want git and `git` is null. It only adds: it fills gaps in `.claude/settings.json` and `.gitignore` and replaces nothing else. For code, add the stack's usual ignores. Don't commit; that's the user's call.
+  - If `init` lists files under `blocked`, a sandbox refused the script's write; Claude Code's does this for `.claude/settings.json`. Write each one with your file-writing tool, with the content given, exactly. If that is refused too, try no other route and go on.
 - **AGENTS.md:** start from `assets/AGENTS.md`. If one already exists, it is the base: keep what it says and add only what's missing.
   - Fill it with what the user told you and what the scan shows, and delete any line you have nothing real for. An empty "Constraints:" is noise.
   - Delete the `## Delegation` section unless the user said yes to routing. If they did, keep it word for word, translated if the file is in another language.
@@ -76,7 +77,7 @@ Show the tree you'll create, one line per file, and what you'll fold in or move;
 
 ### 5. Check, close, and stop
 
-Run `coldstart.py check <folder>` and fix what it reports in what you wrote. If it flags the user's own content (a server path in a rule, a long existing AGENTS.md, a teammate's Claude files), leave it and say so in your close.
+Run `coldstart.py check <folder>` and fix what it reports in what you wrote. If it flags the user's own content (a server path in a rule, a long existing AGENTS.md, a teammate's Claude files), leave it and say so in your close. A file that stayed blocked shows as `missing`; leave it, and in your close say in one line that it could not be written here and that allowing the write and running coldstart again adds it. Don't paste its content.
 
 Reply briefly: what now exists, and the one habit that makes it work. That habit is that agents read the handoff at the start and rewrite it at the end; in Claude Code the reading happens automatically through `.claude/CLAUDE.md`, and other agents follow the instruction in AGENTS.md. Unless this folder is a repo root, add that agents should be started from this folder, or Codex won't find AGENTS.md. If they named Gemini CLI or Aider, say those need a config entry to read AGENTS.md. If the user said yes to routing and uses Claude Code, and you can't see the advisor tool on in this session, add that running `/advisor` once on this machine, with a model above the one they usually run, gives that second opinion the whole conversation; Fable can bill usage credits. Don't list every file again.
 

@@ -104,6 +104,7 @@ def init(root, args):
 
     It only adds: it fills gaps in .claude/settings.json and .gitignore and replaces nothing else.
     Never run it in the home folder, and never write through a link that leads outside the folder.
+    A file the system refuses to write is not an error: it comes back under `blocked` with its content, for the caller to write.
     """
     writes, kept = {}, []
     if args.claude:
@@ -123,12 +124,19 @@ def init(root, args):
     for name in (".ai/memory", *writes):
         if not (root / name).resolve().is_relative_to(root):
             raise ValueError(f"{name} leads outside the folder")
-    created = [name for name in writes if not (root / name).exists()]
+    created, merged, blocked = [], [], {}
     (root / ".ai/memory").mkdir(parents=True, exist_ok=True)
     for name, content in writes.items():
-        (root / name).parent.mkdir(parents=True, exist_ok=True)
-        (root / name).write_bytes(encoded(content, root / name))
-    return {"created": created, "merged": [name for name in writes if name not in created], "kept": kept}
+        path = root / name
+        done = merged if path.exists() else created
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(encoded(content, path))
+        except PermissionError:
+            blocked[name] = content
+        else:
+            done.append(name)
+    return {"created": created, "merged": merged, "kept": kept, "blocked": blocked}
 
 
 def check(root, args):
@@ -188,7 +196,7 @@ def main(argv=None):
         print(json.dumps({"error": str(error)}), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2))
-    return 0 if result.get("ok", True) else 1
+    return 0 if result.get("ok", True) and not result.get("blocked") else 1
 
 
 if __name__ == "__main__":

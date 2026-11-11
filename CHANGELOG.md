@@ -6,6 +6,7 @@
 - With a yes, AGENTS.md gets a `Delegation` section: give each piece of work to the lowest model tier that gets it right, keep judgment in the main session, check what was delegated, redo a weak result one tier up, and ask a tier above when stuck.
   - Tiers are relative to the model running the session, so the text names no model, works in any agent that reads AGENTS.md, and holds when you switch models.
   - It is an instruction, not a setting: nothing is written to `.claude/settings.json` for it.
+- `init` no longer fails when a sandbox refuses one file (Claude Code's Bash sandbox protects `.claude/settings.json`). It writes the rest, returns the refused file's content under `blocked` and exits 1, and the agent writes that file with its own tool.
 - A new eval, `routing-accepted`, covers a yes; `evals/README.md` says how to run the evals and where they can't run.
 - The Claude Code adapter no longer includes the `scout` agent, and the close suggests `/advisor` only with routing. Folders set up earlier keep their `scout.md`; nothing is removed.
 

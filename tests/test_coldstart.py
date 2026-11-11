@@ -233,6 +233,55 @@ class Init(FolderTest):
         self.assertIn("leads outside", report["error"])
         self.assertEqual(list(outside.iterdir()), [])
 
+    def refusing_settings(self, error):
+        """The OS refuses to write .claude/settings.json, as Claude Code's Bash sandbox does."""
+        real = Path.write_bytes
+
+        def write_bytes(path, data):
+            if path.name == "settings.json":
+                raise error
+            return real(path, data)
+
+        return mock.patch.object(Path, "write_bytes", write_bytes)
+
+    def test_a_blocked_file_comes_back_and_the_rest_is_written(self):
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            code, report = self.run_cli("init", "--claude", "--gitignore")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["blocked"], {".claude/settings.json": coldstart.text(coldstart.ASSETS / "settings.json")})
+        self.assertEqual(report["created"], [".claude/CLAUDE.md", ".gitignore"])
+        self.assertFalse((self.root / ".claude/settings.json").exists())
+        self.assertTrue((self.root / ".ai/memory").is_dir())
+
+    def test_a_blocked_merge_reports_the_merged_content_and_leaves_the_file(self):
+        self.write(".claude/settings.json", '{"plansDirectory": "./mine"}')
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["merged"], [])
+        self.assertEqual(self.read(".claude/settings.json"), '{"plansDirectory": "./mine"}')
+        settings = json.loads(report["blocked"][".claude/settings.json"])
+        self.assertEqual(settings["plansDirectory"], "./mine")
+        self.assertIn("Read(.env)", settings["permissions"]["deny"])
+
+    def test_writing_the_blocked_content_finishes_the_job(self):
+        self.finished_folder()
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            _, report = self.run_cli("init", "--claude")
+        for name, content in report["blocked"].items():
+            self.write(name, content)
+        code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 0)
+        self.assertEqual(report["blocked"], {})
+        self.assertIn(".claude/settings.json", report["kept"])
+        self.assertEqual(self.run_cli("check"), (0, {"ok": True, "problems": []}))
+
+    def test_another_write_failure_still_stops(self):
+        with self.refusing_settings(OSError(28, "No space left on device")):
+            code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 2)
+        self.assertIn("error", report)
+
 
 class Check(FolderTest):
     def test_passes_a_finished_folder(self):
