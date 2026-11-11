@@ -124,7 +124,7 @@ There are no hooks and no telemetry.
 
 ## Evidence
 
-The [`evals/`](evals/) folder holds fictional cases for `claude plugin eval`, including a folder with a deadline in a filename and one with hostile old instructions. They need Linux, macOS or WSL2 and use your plan or API credits. Results per release are in the [changelog](CHANGELOG.md).
+The [`evals/`](evals/) folder holds fictional cases for `claude plugin eval`, including a folder with a deadline in a filename and one with hostile old instructions. They need Linux, macOS or WSL2 and use your plan or API credits; [`evals/README.md`](evals/README.md) has the steps. Results per release are in the [changelog](CHANGELOG.md).
 
 ```bash
 claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit
