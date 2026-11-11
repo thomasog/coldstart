@@ -1,15 +1,15 @@
 # Roadmap
 
-## Now: model routing is opt-in (1.4.0)
+## Now: model routing is an opt-in section of AGENTS.md (1.4.0)
 
-coldstart exists so that instructions, the handoff and memory travel with a folder. Which model does which work, and when to ask a stronger model for advice, is closer to a personal working style: it is much the same in every folder and it changes with each model generation.
+coldstart exists so that instructions, the handoff and memory travel with a folder. Which model does which work, and when to ask a stronger one, is closer to a personal working style, so setup asks once and the default is no.
 
-So since 1.4.0 setup asks once, and the default is no. A yes writes config only: helper agents with a default model, and the advisor setting. No delegation prose goes into `AGENTS.md`.
+A yes adds a `Delegation` section to `AGENTS.md`. It names tiers relative to the model running the session and no model by name, so it doesn't age and works in any agent. The `scout` agent file and every routing setting are gone from the folder.
 
-Not tested yet:
+## Next: measure it
 
-- The path for Codex, Gemini CLI, Cursor and Copilot, which writes agent files from each tool's official page at setup. Run it by hand in each tool, then add an eval if one can run without the network.
-- Whether the three helpers change results for the better. Measure with an eval before adding anything more.
+- An eval that runs a task with and without the section and compares the result and the cost: does it delegate the right work, and does it delegate too much? Anthropic's guide for Fable 5.2 warns of the second.
+- A run by hand in Codex, Gemini CLI and Cursor.
 
 ## Later: a home outside the folder
 
@@ -35,8 +35,7 @@ Researched on 2026-11-11 against the Claude Code docs. Re-check before building.
 - How a personal plugin gets turned on for a claude.ai account.
 - Whether `CLAUDE_CODE_SUBAGENT_MODEL` reaches the built-in Explore agent.
 - Whether a project agent overrides a user or plugin agent of the same name.
-- Whether a line telling the main session to delegate changes behavior for the better. Anthropic's guide for Fable 5.2 warns that such lines can cause more subagents than needed, so measure it with an eval first.
 
 ## Other agents
 
-Codex has no built-in advisor. A request for one is open and unanswered (https://github.com/openai/codex/issues/36837), so there the advisor is a custom agent, and Codex starts custom agents only when asked. Its agent files and Gemini CLI's pin a versioned model name, which is why coldstart writes them at setup and records the name in memory.
+Codex has no built-in advisor; a request for one is open and unanswered (https://github.com/openai/codex/issues/36837). It starts subagents only when asked or when `AGENTS.md` requests delegation, which the `Delegation` section does.

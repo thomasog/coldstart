@@ -21,7 +21,6 @@ INSTRUCTIONS = (
     ".windsurfrules",
 )
 ADAPTER = {"CLAUDE.md": ".claude/CLAUDE.md", "settings.json": ".claude/settings.json"}
-ROUTING = {"scout.md": ".claude/agents/scout.md", "worker.md": ".claude/agents/worker.md"}
 REQUIRED = ("AGENTS.md", ".ai/HANDOFF.md", ".ai/memory/MEMORY.md")
 IMPORTS = ("@../AGENTS.md", "@../.ai/HANDOFF.md", "@../.ai/memory/MEMORY.md")
 SKIPPED_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", "target", ".cache"}
@@ -82,15 +81,14 @@ def scan(root, args):
     }
 
 
-def merged_settings(path, advisor):
-    """The existing settings plus what the template adds, and the advisor model if one is given. The user's values win."""
-    settings = json.loads(text(path)) if path.exists() else {}
-    template = {**json.loads(text(ASSETS / "settings.json")), **({"advisorModel": advisor} if advisor else {})}
-    for key, value in template.items():
-        if key != "permissions":
-            settings.setdefault(key, value)
+def merged_settings(path):
+    """The existing settings plus what the template adds. The user's values win."""
+    settings = json.loads(text(path))
+    template = json.loads(text(ASSETS / "settings.json"))
     deny = settings.setdefault("permissions", {}).setdefault("deny", [])
     deny += [rule for rule in template["permissions"]["deny"] if rule not in deny]
+    for key, value in template.items():
+        settings.setdefault(key, value)
     return settings
 
 
@@ -102,26 +100,22 @@ def gitignore_with_template(path):
 
 
 def init(root, args):
-    """Create .ai/memory/, and on request the Claude adapter, model routing for Claude and .gitignore lines.
+    """Create .ai/memory/, and on request the Claude adapter and .gitignore lines.
 
-    Routing adds the helper agents and turns on the advisor in .claude/settings.json; it includes the adapter.
     It only adds: it fills gaps in .claude/settings.json and .gitignore and replaces nothing else.
     Never run it in the home folder, and never write through a link that leads outside the folder.
     """
     writes, kept = {}, []
-    if args.claude or args.routing:
-        for asset, target in {**ADAPTER, **(ROUTING if args.routing else {})}.items():
-            path = root / target
-            if asset == "settings.json":
-                merged = merged_settings(path, args.advisor if args.routing else None)
-                if path.exists() and merged == json.loads(text(path)):
-                    kept.append(target)
-                else:
-                    writes[target] = json.dumps(merged, indent=2, ensure_ascii=False) + "\n"
-            elif path.exists():
-                kept.append(target)
-            else:
+    if args.claude:
+        for asset, target in ADAPTER.items():
+            if not (root / target).exists():
                 writes[target] = text(ASSETS / asset)
+                continue
+            merged = merged_settings(root / target) if asset == "settings.json" else None
+            if merged is not None and merged != json.loads(text(root / target)):
+                writes[target] = json.dumps(merged, indent=2, ensure_ascii=False) + "\n"
+            else:
+                kept.append(target)
     if args.gitignore:
         gitignore = gitignore_with_template(root / ".gitignore")
         if gitignore:
@@ -181,8 +175,6 @@ def main(argv=None):
         sub.set_defaults(run=command)
         if command is init:
             sub.add_argument("--claude", action="store_true", help="add the Claude Code adapter")
-            sub.add_argument("--routing", action="store_true", help="add model routing for Claude Code")
-            sub.add_argument("--advisor", default="fable", help="advisor model that --routing sets (default: fable)")
             sub.add_argument("--gitignore", action="store_true", help="add the template's .gitignore lines")
     args = parser.parse_args(argv)
     try:

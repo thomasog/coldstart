@@ -38,10 +38,7 @@ Run coldstart in a code repo or in a personal project such as a move, a trip or 
 ├── .gitignore             # only if the folder is or will be in git
 └── .claude/               # only if you use Claude Code
     ├── CLAUDE.md          # imports AGENTS.md, the handoff and the memory
-    ├── settings.json      # keeps plans and memory inside the folder
-    └── agents/            # only if you want model routing
-        ├── scout.md       # cheap bulk reading, search and images
-        └── worker.md      # mechanical work that is fully specified
+    └── settings.json      # keeps plans and memory inside the folder
 ```
 
 Later, agents keep what they make for themselves in `.ai/` too: plans, reusable scripts, archives and scratch work.
@@ -50,20 +47,17 @@ The habit that makes it work: agents read `.ai/HANDOFF.md` at the start of a ses
 
 ## Model routing (optional)
 
-During setup coldstart asks once whether you want model routing. The default is no, and then nothing below is written.
+During setup coldstart asks once whether you want model routing. The default is no, and then nothing about it is written.
 
-If you say yes, the project gets three helpers, as config files and not as instructions:
+If you say yes, `AGENTS.md` gets a short `Delegation` section that tells the agent to:
 
-- **`scout`:** bulk reading, search and images, on Haiku by default.
-- **`worker`:** mechanical work that is fully specified, on Sonnet by default. The agent that calls a helper can choose another model, and picks the effort, for each task.
-- **`advisor`:** a second opinion from a stronger model when the agent is stuck.
+- give each piece of work to the lowest model tier that gets it right, and choose the effort;
+- keep design, trade-offs and anything hard to undo for itself, and check what it delegated;
+- redo a weak result one tier up, and ask a tier above its own when it is stuck.
 
-What is written depends on the agents you named:
+The tiers are relative to whatever model is running, so the same text works if you use Opus one day and Sonnet the next, and in any agent that reads `AGENTS.md`. It names no model and writes no settings.
 
-- **Claude Code:** two files in `.claude/agents/`, and `advisorModel` in `.claude/settings.json`, which turns on Claude Code's built-in advisor for everyone who opens the folder. The advisor is set one step above the model you ran setup on (Opus for Sonnet, Fable for Opus); Fable can bill usage credits. Change it in that file if you prefer.
-- **Codex, Gemini CLI, Cursor, Copilot:** the agent opens that tool's official documentation page, writes the same three helpers in its format with its current models, and shows them to you before writing. This path has no automatic test yet. Codex uses the helpers only when you ask for them by name.
-
-Say no if you already route models in your own config.
+Its limits: it is an instruction, so an agent can ignore it or delegate too much, and no eval measures that yet. Claude Code's built-in advisor sees the whole conversation but can't be turned on from `AGENTS.md`; run `/advisor` once per machine if you want it.
 
 ## Works with
 
@@ -118,8 +112,7 @@ Start your agent from the folder itself, not a subfolder: without git, Codex fin
 - **Reads:** file names, agent instruction and config files such as `CLAUDE.md` or `.mcp.json`, and build manifests such as `package.json`. It opens no other file, and it only checks whether a parent folder is a git repository.
 - **Writes:** the files above, and nothing else. It moves `AGENTS.override.md`, and with Claude Code an old root `CLAUDE.md`, to `.ai/archive/` instead of deleting them, and shows you any command, URL, install step, hook or MCP server in old instructions first.
 - **Runs:** `coldstart.py`, a short Python script that uses only the standard library, launches no other program, makes no network calls and asks no questions. The agent runs `git init` if you ask for git.
-- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. Folders set up before 1.3.0 can delete `.claude/agents/advisor.md`; Claude Code's built-in advisor replaces it.
-- **With model routing:** the files described under Model routing. For agents other than Claude Code, the agent also opens one official documentation page per agent on the web.
+- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. Folders set up before 1.3.0 can delete `.claude/agents/advisor.md`; Claude Code's built-in `/advisor` replaces it.
 
 There are no hooks and no telemetry.
 

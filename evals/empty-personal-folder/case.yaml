@@ -23,10 +23,11 @@ graders:
     pattern: '^.+$'
     flags: m
     match: "count:5"
-  - name: no-routing
-    type: file_exists
-    path: ".claude/agents/**"
-    exists: false
+  - name: no-delegation-section
+    type: regex
+    target: { source: file, path: AGENTS.md }
+    pattern: 'Delegation'
+    match: not_contains
   - name: no-gitignore
     type: file_exists
     path: .gitignore

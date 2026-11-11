@@ -136,31 +136,6 @@ class Init(FolderTest):
         self.assertFalse((self.root / ".claude/agents").exists())
         self.assertNotIn("advisorModel", json.loads(self.read(".claude/settings.json")))
 
-    def test_routing_adds_the_helpers_and_the_advisor_and_can_repeat(self):
-        self.finished_folder()
-        self.run_cli("init", "--routing")
-        for target in (*coldstart.ADAPTER.values(), *coldstart.ROUTING.values()):
-            self.assertTrue((self.root / target).is_file(), target)
-        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "fable")
-        _, report = self.run_cli("init", "--routing")
-        self.assertEqual(report["created"] + report["merged"], [])
-        self.assertEqual(self.run_cli("check")[0], 0)
-
-    def test_routing_takes_the_advisor_it_is_given(self):
-        self.run_cli("init", "--routing", "--advisor", "opus")
-        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
-
-    def test_routing_keeps_the_advisor_the_user_chose(self):
-        self.write(".claude/settings.json", '{"advisorModel": "opus"}')
-        self.run_cli("init", "--routing")
-        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
-
-    def test_every_helper_sets_a_model_and_leaves_effort_to_the_caller(self):
-        for asset in coldstart.ROUTING:
-            frontmatter = (coldstart.ASSETS / asset).read_text(encoding="utf-8").split("---")[1]
-            self.assertRegex(frontmatter, r"(?m)^model: (haiku|sonnet)$", asset)
-            self.assertNotRegex(frontmatter, r"(?m)^effort:", asset)
-
     def test_never_overwrites_and_can_repeat(self):
         self.write(".claude/CLAUDE.md", "mine")
         self.run_cli("init", "--claude")
@@ -242,7 +217,9 @@ class Init(FolderTest):
         self.assertFalse((self.root / ".claude/agents/advisor.md").exists())
 
     def test_the_agents_template_stays_small(self):
-        self.assertLessEqual(len((coldstart.ASSETS / "AGENTS.md").read_text(encoding="utf-8").splitlines()), 25)
+        template = (coldstart.ASSETS / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertLessEqual(len(template.splitlines()), 32)
+        self.assertIn("\n## Delegation\n", template)
 
     def test_refuses_a_link_that_leads_outside(self):
         outside = Path(tempfile.mkdtemp())
