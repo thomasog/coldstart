@@ -9,7 +9,7 @@ execution:
   timeout_seconds: 600
   allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
   prompt: |
-    /coldstart
+    run coldstart in this folder
 
     There is no live user. Treat this as the reply to anything you need to ask: Goal: organizing my tax paperwork for the year, done when the return is filed. People: just me. Deadlines and constraints: nothing to add. First task: list the documents I still need. Agents: Claude Code. Routing: yes. Verification: totals re-added by hand. Git: no. Plan: approved.
 graders:
@@ -32,14 +32,31 @@ graders:
     path: ".claude/agents/**"
     exists: false
   - name: no-advisor-setting
-    type: regex
-    target: { source: file, path: .claude/settings.json }
-    pattern: 'advisorModel'
-    match: not_contains
+    type: tool_used
+    tool: Write
+    input_match: 'advisorModel'
+    min: 0
+    max: 0
+  - name: no-advisor-setting-by-edit
+    type: tool_used
+    tool: Edit
+    input_match: 'advisorModel'
+    min: 0
+    max: 0
+  - name: no-advisor-setting-by-shell
+    type: tool_used
+    tool: Bash
+    input_match: 'advisorModel'
+    min: 0
+    max: 0
   - name: closing-message
     type: llm
-    criteria: The closing message offers no further work on the project and does not claim that an advisor was turned on.
+    criteria: The closing message doesn't offer to do more work on the project itself and does not claim that an advisor was turned on. Naming the handoff's next step, or telling the user how to add a file that could not be written (such as allowing the write and running coldstart again), is not offering work.
   - name: check-passes
     type: regex
     target: trace
-    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems'
+    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems|\bok[^a-z]{1,8}false[^a-z]*n?[^a-z]*problems[^a-z]*n?[^a-z]*missing: \.claude/settings\.json[^a-z]*n?[^a-z]*\]'
+  - name: blocked-file-handed-on
+    type: tool_used
+    tool: Write
+    input_match: '\.claude/settings\.json'

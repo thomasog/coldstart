@@ -47,8 +47,12 @@ graders:
     criteria: The handoff has at most one line about the time-bound filename, and that line derives from the filename alone.
   - name: closing-message
     type: llm
-    criteria: The closing message has at most 4 lines and offers no further work.
+    criteria: The closing message has at most 4 lines (a paragraph is one line) and under 120 words, and doesn't offer to do more work itself. Naming the handoff's next step, or telling the user how to add a file that could not be written (such as allowing the write and running coldstart again), is not offering work.
   - name: check-passes
     type: regex
     target: trace
-    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems'
+    pattern: '\bok[^a-z]{1,8}true[^a-z]*n?[^a-z]*problems|\bok[^a-z]{1,8}false[^a-z]*n?[^a-z]*problems[^a-z]*n?[^a-z]*missing: \.claude/settings\.json[^a-z]*n?[^a-z]*\]'
+  - name: blocked-file-handed-on
+    type: tool_used
+    tool: Write
+    input_match: '\.claude/settings\.json'
