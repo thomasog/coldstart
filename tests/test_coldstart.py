@@ -91,6 +91,20 @@ class Scan(FolderTest):
         self.assertTrue(report["truncated"])
         self.assertEqual(len(report["files"]), 3)
 
+    def test_one_big_folder_leaves_room_for_the_rest(self):
+        with mock.patch.object(coldstart, "MAX_PER_FOLDER", 2):
+            for n in range(5):
+                self.write(f"Photos/img{n}.jpg")
+            self.write("contract.pdf")
+            self.write("deep/notes/todo.txt")
+            _, report = self.run_cli("scan")
+        self.assertEqual(report["files"], ["contract.pdf", "Photos/img0.jpg", "Photos/img1.jpg", "Photos/ (+3 more files)", "deep/notes/todo.txt"])
+
+    def test_names_cursor_and_vscode_config_that_runs(self):
+        self.write(".cursor/hooks.json")
+        self.write(".vscode/mcp.json")
+        self.assertEqual(self.run_cli("scan")[1]["instructions"], [".cursor/hooks.json", ".vscode/mcp.json"])
+
     def test_never_opens_documents(self):
         self.write("secret.pdf", "private")
         self.write("AGENTS.md", "private")
@@ -178,12 +192,30 @@ class Init(FolderTest):
         self.run_cli("init", "--gitignore")
         self.assertEqual(self.read(".gitignore").splitlines()[-1], "!.env.example")
 
-    def test_refuses_the_home_folder(self):
-        with mock.patch.object(coldstart.Path, "home", return_value=self.root):
-            code, report = self.run_cli("init", "--claude")
-        self.assertEqual(code, 2)
-        self.assertIn("home folder", report["error"])
-        self.assertEqual(list(self.root.iterdir()), [])
+    def test_refuses_the_home_folder_and_any_folder_above_it(self):
+        for home in (self.root, self.root / "users/me"):
+            with mock.patch.object(coldstart.Path, "home", return_value=home):
+                code, report = self.run_cli("init", "--claude")
+            self.assertEqual(code, 2)
+            self.assertIn("home folder", report["error"])
+            self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_keeps_the_line_endings_and_bom_of_a_merged_file(self):
+        (self.root / ".gitignore").write_bytes(b"\xef\xbb\xbfdist/\r\n")
+        self.run_cli("init", "--gitignore")
+        content = (self.root / ".gitignore").read_bytes()
+        self.assertTrue(content.startswith(b"\xef\xbb\xbf"))
+        self.assertNotIn(b"\n", content.replace(b"\r\n", b""))
+        self.assertIn(b".ai/scratch/\r\n", content)
+
+    def test_the_real_adapter_passes_check(self):
+        self.finished_folder()
+        self.run_cli("init", "--claude", "--gitignore")
+        self.assertEqual(self.run_cli("check"), (0, {"ok": True, "problems": []}))
+        self.assertFalse((self.root / ".claude/agents/advisor.md").exists())
+
+    def test_the_agents_template_stays_small(self):
+        self.assertLessEqual(len((coldstart.ASSETS / "AGENTS.md").read_text(encoding="utf-8").splitlines()), 25)
 
     def test_refuses_a_link_that_leads_outside(self):
         outside = Path(tempfile.mkdtemp())
@@ -282,6 +314,21 @@ class Check(FolderTest):
         self.assert_problem("missing import in .claude/CLAUDE.md: @../.ai/HANDOFF.md")
         self.assert_problem("missing: .claude/settings.json")
         self.assert_problem("move to .ai/archive/: CLAUDE.md")
+
+    def test_finds_the_adapter_without_scout_and_ignores_trailing_spaces(self):
+        self.finished_folder()
+        self.write(".claude/settings.json", "{}")
+        self.write(".claude/CLAUDE.md", "@../AGENTS.md  \n@../.ai/HANDOFF.md\n@../.ai/memory/MEMORY.md\r\n")
+        self.assertEqual(self.run_cli("check")[0], 0)
+        (self.root / ".claude/settings.json").unlink()
+        self.assert_problem("missing: .claude/settings.json")
+
+    def test_a_longer_home_name_is_not_this_machine(self):
+        if len(Path.home().parts) <= 2:
+            self.skipTest("a home this short is ignored on purpose")
+        self.finished_folder()
+        self.write("AGENTS.md", FINISHED_AGENTS + f"See {Path.home().as_posix()}x/file\n")
+        self.assertEqual(self.run_cli("check")[0], 0)
 
     def test_leaves_a_teammates_claude_files_alone(self):
         self.finished_folder()

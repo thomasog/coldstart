@@ -11,8 +11,9 @@ It lists the folder, asks a few questions, writes the files below, and stops. It
 
 ## Install
 
-```text
-/plugin install coldstart --marketplace thomasog/coldstart
+```bash
+claude plugin marketplace add thomasog/coldstart
+claude plugin install coldstart@thomasog-plugins
 ```
 
 ## Use
@@ -23,7 +24,7 @@ Ask for it by name, for example `/coldstart`. It never starts on its own. In a f
 
 It reads file names and agent instruction and config files inside the folder, checks only whether a parent folder is a git repository, writes only the files above, and runs `skills/coldstart/scripts/coldstart.py`, which launches no other program and makes no network calls.
 
-In Claude Code, `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays where it is and is no longer loaded there. The `advisor` agent runs on the strongest model you can reach, which can bill usage credits.
+In Claude Code, `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays where it is and is no longer loaded there. Folders set up before 1.3.0 can delete `.claude/agents/advisor.md`; Claude Code's built-in `/advisor` replaces it.
 
 There are no hooks and no telemetry. Full details: https://github.com/thomasog/coldstart#what-it-reads-writes-and-runs
 

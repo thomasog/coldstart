@@ -1,8 +1,9 @@
 ---
 name: scout
-description: Fast, low-cost helper for simple read-only work, and the default for images — extracting data from images, screenshots, scans or receipts in bulk, finding files, reading and summarizing documents, listing where something is used. Use it instead of doing bulk reading or image reading on the main model. Not for judgment calls or anything where a misread number would be costly.
+description: Low-cost helper for read-only bulk work: finding files, reading and summarizing documents, listing where something is used, and extracting text or data from images, screenshots and scans. Use it instead of doing bulk reading or image reading on the main model, then re-read yourself any number or value a decision depends on.
 tools: Read, Grep, Glob
 model: haiku
+effort: high
 omitClaudeMd: true
 ---
 

@@ -17,18 +17,20 @@ INSTRUCTIONS = (
     "AGENTS.md", "AGENTS.override.md", "CLAUDE.md", ".claude/CLAUDE.md", ".claude/rules", ".claude/agents",
     ".claude/settings.json", ".mcp.json", ".cursorrules", ".cursor/rules", ".cursor/mcp.json", ".clinerules",
     ".github/copilot-instructions.md", ".github/instructions", "GEMINI.md", ".agents/rules",
-    ".agents/mcp_config.json", ".codex/config.toml", ".codex/hooks.json",
+    ".agents/mcp_config.json", ".codex/config.toml", ".codex/hooks.json", ".cursor/hooks.json", ".vscode/mcp.json",
+    ".windsurfrules",
 )
 ADAPTER = {
     "CLAUDE.md": ".claude/CLAUDE.md",
     "settings.json": ".claude/settings.json",
     "scout.md": ".claude/agents/scout.md",
-    "advisor.md": ".claude/agents/advisor.md",
 }
+ADAPTER_CORE = (".claude/CLAUDE.md", ".claude/settings.json")
 REQUIRED = ("AGENTS.md", ".ai/HANDOFF.md", ".ai/memory/MEMORY.md")
 IMPORTS = ("@../AGENTS.md", "@../.ai/HANDOFF.md", "@../.ai/memory/MEMORY.md")
-SKIPPED_DIRS = {".git", "node_modules", ".venv", "__pycache__", "dist", "build"}
-MAX_FILES, MAX_AGENTS_LINES, MAX_MEMORIES = 300, 120, 50
+SKIPPED_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", "target", ".cache"}
+MAX_FILES, MAX_PER_FOLDER, MAX_AGENTS_LINES, MAX_MEMORIES = 300, 50, 120, 50
+BOM = b"\xef\xbb\xbf"
 
 PLACEHOLDER = re.compile(r"(?<!\w)<[^\W\d_][^<>=\n]* [^<>=\n]*>")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
@@ -38,15 +40,37 @@ def text(path):
     return path.read_text(encoding="utf-8-sig")
 
 
+def encoded(content, path):
+    """Content as bytes, in the line endings and BOM the existing file uses, so a rewrite isn't a whole-file diff."""
+    old = path.read_bytes() if path.is_file() else b""
+    content = content.replace("\r\n", "\n")
+    if b"\r\n" in old:
+        content = content.replace("\n", "\r\n")
+    return (BOM if old.startswith(BOM) else b"") + content.encode()
+
+
 def tree(root):
-    """Relative file names under root, without opening any of them."""
-    names = []
-    for folder, subfolders, files in os.walk(root):
-        subfolders[:] = sorted(set(subfolders) - SKIPPED_DIRS)
-        for name in sorted(files):
-            names.append((Path(folder) / name).relative_to(root).as_posix())
-            if len(names) > MAX_FILES:
-                return names
+    """Relative file names under root, shallow folders first, without opening any of them.
+
+    A folder with more than MAX_PER_FOLDER files shows that many, then a "<folder>/ (+N more files)" line.
+    """
+    names, queue = [], [root]
+    while queue and len(names) <= MAX_FILES:
+        folder = queue.pop(0)
+        try:
+            entries = sorted(os.scandir(folder), key=lambda entry: entry.name)
+        except OSError:
+            continue
+        files = []
+        for entry in entries:
+            if entry.is_dir():
+                if entry.name not in SKIPPED_DIRS and not entry.is_symlink():
+                    queue.append(Path(entry.path))
+            else:
+                files.append(Path(entry.path).relative_to(root).as_posix())
+        names += files[:MAX_PER_FOLDER]
+        if len(files) > MAX_PER_FOLDER:
+            names.append(f"{folder.relative_to(root).as_posix()}/ (+{len(files) - MAX_PER_FOLDER} more files)")
     return names
 
 
@@ -108,7 +132,7 @@ def init(root, args):
     (root / ".ai/memory").mkdir(parents=True, exist_ok=True)
     for name, content in writes.items():
         (root / name).parent.mkdir(parents=True, exist_ok=True)
-        (root / name).write_bytes(content.encode())
+        (root / name).write_bytes(encoded(content, root / name))
     return {"created": created, "merged": [name for name in writes if name not in created], "kept": kept}
 
 
@@ -118,18 +142,19 @@ def check(root, args):
     written = [name for name in REQUIRED if (root / name).is_file()]
     if (root / "AGENTS.override.md").exists():
         problems.append("move to .ai/archive/: AGENTS.override.md")
-    if (root / ".claude/agents/scout.md").is_file():
-        problems += [f"missing: {target}" for target in ADAPTER.values() if not (root / target).is_file()]
+    adapter = root / ".claude/CLAUDE.md"
+    lines = [line.strip() for line in text(adapter).splitlines()] if adapter.is_file() else []
+    if any(line in IMPORTS for line in lines):
+        written.append(".claude/CLAUDE.md")
+        problems += [f"missing: {target}" for target in ADAPTER_CORE if not (root / target).is_file()]
+        problems += [f"missing import in .claude/CLAUDE.md: {line}" for line in IMPORTS if line not in lines]
         if (root / "CLAUDE.md").exists():
             problems.append("move to .ai/archive/: CLAUDE.md")
-        if (root / ".claude/CLAUDE.md").is_file():
-            written.append(".claude/CLAUDE.md")
-            lines = text(root / ".claude/CLAUDE.md").splitlines()
-            problems += [f"missing import in .claude/CLAUDE.md: {line}" for line in IMPORTS if line not in lines]
     local = {path.as_posix().split(":")[-1].casefold() for path in (root, Path.home()) if len(path.parts) > 2}
+    machine = re.compile("|".join(re.escape(path) + r"(?![\w.-])" for path in local)) if local else None
     for name in written:
         content = text(root / name)
-        if any(path in content.replace("\\", "/").casefold() for path in local):
+        if machine and machine.search(content.replace("\\", "/").casefold()):
             problems.append(f"path from this machine in {name}")
         if PLACEHOLDER.search(CODE.sub("", content)):
             problems.append(f"unfilled placeholder in {name}")
@@ -161,8 +186,8 @@ def main(argv=None):
         root = args.folder.resolve()
         if not root.is_dir():
             raise ValueError(f"not a folder: {args.folder}")
-        if root == Path.home().resolve():
-            raise ValueError("this is your home folder, not a project: pick a project folder")
+        if Path.home().resolve().is_relative_to(root):
+            raise ValueError("this is or contains your home folder, not a project: pick a project folder")
         result = args.run(root, args)
     except Exception as error:
         print(json.dumps({"error": str(error)}), file=sys.stderr)
