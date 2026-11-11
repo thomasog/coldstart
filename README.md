@@ -40,8 +40,7 @@ Run coldstart in a code repo or in a personal project such as a move, a trip or 
     ├── CLAUDE.md          # imports AGENTS.md, the handoff and the memory
     ├── settings.json      # keeps plans and memory inside the folder
     └── agents/
-        ├── scout.md       # fast and cheap: search, read, bulk vision
-        └── advisor.md     # strong second opinion for hard calls
+        └── scout.md       # cheap bulk reading, search and images
 ```
 
 Later, agents keep what they make for themselves in `.ai/` too: plans, reusable scripts, archives and scratch work.
@@ -101,7 +100,7 @@ Start your agent from the folder itself, not a subfolder: without git, Codex fin
 - **Reads:** file names, agent instruction and config files such as `CLAUDE.md` or `.mcp.json`, and build manifests such as `package.json`. It opens no other file, and it only checks whether a parent folder is a git repository.
 - **Writes:** the files above, and nothing else. It moves `AGENTS.override.md`, and with Claude Code an old root `CLAUDE.md`, to `.ai/archive/` instead of deleting them, and shows you any command, URL, install step, hook or MCP server in old instructions first.
 - **Runs:** `coldstart.py`, a short Python script that uses only the standard library, launches no other program, makes no network calls and asks no questions. The agent runs `git init` if you ask for git.
-- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. The `advisor` agent runs on the strongest model you can reach, which can bill usage credits.
+- **Changes in Claude Code:** `.claude/settings.json` turns off auto memory for that folder, keeps plans in `.ai/plans/`, and denies Claude's own Read and Edit tools access to `.env` files. Anything Claude had already saved for the folder stays in `~/.claude` and is no longer loaded there; copy what you want by hand. Folders set up before 1.3.0 can delete `.claude/agents/advisor.md`; Claude Code's built-in `/advisor` replaces it.
 
 There are no hooks and no telemetry.
 

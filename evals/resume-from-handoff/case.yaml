@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: resume-from-handoff
+tags: [coldstart]
+plugins: ["../../plugin"]
+expected_outcome: |
+  A later session in a folder set up by coldstart, with only AGENTS.md to go on, reads the handoff, states its date, does its next step and rewrites the handoff instead of appending to it.
+context:
+  scaffold_script: place-files.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
+  prompt: |
+    let's continue
+
+    There is no live user. Treat this as the reply to anything you need to ask: Go ahead.
+graders:
+  - name: skill-not-started
+    type: tool_used
+    tool: Skill
+    input_match: coldstart
+    min: 0
+    max: 0
+  - name: handoff-date-stated
+    type: regex
+    pattern: '2026-10-20|20/10/2026|October 20'
+  - name: next-step-done
+    type: regex
+    target: { source: file, path: budget.md }
+    pattern: '2[.,]?400'
+  - name: handoff-rewritten
+    type: regex
+    target: { source: file, path: .ai/HANDOFF.md }
+    pattern: '_Updated: 2026-10-20_'
+    match: not_contains
+  - name: handoff-not-appended
+    type: regex
+    target: { source: file, path: .ai/HANDOFF.md }
+    pattern: '# Handoff[\s\S]*# Handoff'
+    match: not_contains
+  - name: stops-at-the-next-step
+    type: llm
+    criteria: The agent added the movers' quote to budget.md and did not go on to unrelated work such as booking, emailing or reorganizing files.

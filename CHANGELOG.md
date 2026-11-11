@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.3.0 - 2026-11-11
+
+- The AGENTS.md template is written for models that follow instructions literally:
+  - Each rule states its own scope. The handoff's own next step no longer needs an OK, and memory is checked before anything hard to undo, not before every use.
+  - Only the main session rewrites the handoff, in plain words.
+  - The secrets rule no longer covers addresses.
+  - The template stays the same size.
+- The `advisor` subagent is gone: Claude Code's built-in `/advisor` replaces it, sees the whole conversation and is called on its own at dead ends. When it isn't on, the close suggests turning it on once per machine. Folders set up earlier can delete `.claude/agents/advisor.md`. `scout` runs at high effort and tells the main model to re-read any value a decision depends on. Both leave the folder in the next version; see `ROADMAP.md`.
+- Setup no longer invents a `Done when` checklist, and old instructions shown for approval are marked keep or drop, so only kept items reach AGENTS.md.
+- `scan` lists shallow folders first and caps each folder, so one big folder can't hide the rest. It also names `.cursor/hooks.json`, `.vscode/mcp.json` and `.windsurfrules`.
+- The script refuses any folder that contains the home folder.
+- Rewritten files keep their line endings and BOM.
+- `check` finds the adapter by its imports, tolerates trailing spaces and no longer mistakes a longer home name for this machine's.
+- A new eval, `resume-from-handoff`, tests the next session.
+
 ## 1.2.0 - 2026-11-05
 
 - `scan` works by name only and opens no file; it reports the enclosing git repository and active config such as `.mcp.json`, hooks and `.agents/rules`.
