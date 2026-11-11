@@ -133,6 +133,8 @@ class Init(FolderTest):
         self.run_cli("init", "--claude")
         for target in coldstart.ADAPTER.values():
             self.assertTrue((self.root / target).is_file(), target)
+        self.assertFalse((self.root / ".claude/agents").exists())
+        self.assertNotIn("advisorModel", json.loads(self.read(".claude/settings.json")))
 
     def test_never_overwrites_and_can_repeat(self):
         self.write(".claude/CLAUDE.md", "mine")
@@ -215,7 +217,9 @@ class Init(FolderTest):
         self.assertFalse((self.root / ".claude/agents/advisor.md").exists())
 
     def test_the_agents_template_stays_small(self):
-        self.assertLessEqual(len((coldstart.ASSETS / "AGENTS.md").read_text(encoding="utf-8").splitlines()), 25)
+        template = (coldstart.ASSETS / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertLessEqual(len(template.splitlines()), 32)
+        self.assertIn("\n## Delegation\n", template)
 
     def test_refuses_a_link_that_leads_outside(self):
         outside = Path(tempfile.mkdtemp())
@@ -228,6 +232,55 @@ class Init(FolderTest):
         self.assertEqual(code, 2)
         self.assertIn("leads outside", report["error"])
         self.assertEqual(list(outside.iterdir()), [])
+
+    def refusing_settings(self, error):
+        """The OS refuses to write .claude/settings.json, as Claude Code's Bash sandbox does."""
+        real = Path.write_bytes
+
+        def write_bytes(path, data):
+            if path.name == "settings.json":
+                raise error
+            return real(path, data)
+
+        return mock.patch.object(Path, "write_bytes", write_bytes)
+
+    def test_a_blocked_file_comes_back_and_the_rest_is_written(self):
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            code, report = self.run_cli("init", "--claude", "--gitignore")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["blocked"], {".claude/settings.json": coldstart.text(coldstart.ASSETS / "settings.json")})
+        self.assertEqual(report["created"], [".claude/CLAUDE.md", ".gitignore"])
+        self.assertFalse((self.root / ".claude/settings.json").exists())
+        self.assertTrue((self.root / ".ai/memory").is_dir())
+
+    def test_a_blocked_merge_reports_the_merged_content_and_leaves_the_file(self):
+        self.write(".claude/settings.json", '{"plansDirectory": "./mine"}')
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["merged"], [])
+        self.assertEqual(self.read(".claude/settings.json"), '{"plansDirectory": "./mine"}')
+        settings = json.loads(report["blocked"][".claude/settings.json"])
+        self.assertEqual(settings["plansDirectory"], "./mine")
+        self.assertIn("Read(.env)", settings["permissions"]["deny"])
+
+    def test_writing_the_blocked_content_finishes_the_job(self):
+        self.finished_folder()
+        with self.refusing_settings(PermissionError(1, "Operation not permitted")):
+            _, report = self.run_cli("init", "--claude")
+        for name, content in report["blocked"].items():
+            self.write(name, content)
+        code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 0)
+        self.assertEqual(report["blocked"], {})
+        self.assertIn(".claude/settings.json", report["kept"])
+        self.assertEqual(self.run_cli("check"), (0, {"ok": True, "problems": []}))
+
+    def test_another_write_failure_still_stops(self):
+        with self.refusing_settings(OSError(28, "No space left on device")):
+            code, report = self.run_cli("init", "--claude")
+        self.assertEqual(code, 2)
+        self.assertIn("error", report)
 
 
 class Check(FolderTest):
@@ -315,7 +368,7 @@ class Check(FolderTest):
         self.assert_problem("missing: .claude/settings.json")
         self.assert_problem("move to .ai/archive/: CLAUDE.md")
 
-    def test_finds_the_adapter_without_scout_and_ignores_trailing_spaces(self):
+    def test_finds_the_adapter_and_ignores_trailing_spaces(self):
         self.finished_folder()
         self.write(".claude/settings.json", "{}")
         self.write(".claude/CLAUDE.md", "@../AGENTS.md  \n@../.ai/HANDOFF.md\n@../.ai/memory/MEMORY.md\r\n")
