@@ -22,7 +22,6 @@ INSTRUCTIONS = (
 )
 ADAPTER = {"CLAUDE.md": ".claude/CLAUDE.md", "settings.json": ".claude/settings.json"}
 ROUTING = {"scout.md": ".claude/agents/scout.md", "worker.md": ".claude/agents/worker.md"}
-ADVISOR = {"advisorModel": "fable"}
 REQUIRED = ("AGENTS.md", ".ai/HANDOFF.md", ".ai/memory/MEMORY.md")
 IMPORTS = ("@../AGENTS.md", "@../.ai/HANDOFF.md", "@../.ai/memory/MEMORY.md")
 SKIPPED_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", "target", ".cache"}
@@ -83,10 +82,10 @@ def scan(root, args):
     }
 
 
-def merged_settings(path, routing):
-    """The existing settings plus what the template adds, and the advisor with routing. The user's values win."""
+def merged_settings(path, advisor):
+    """The existing settings plus what the template adds, and the advisor model if one is given. The user's values win."""
     settings = json.loads(text(path)) if path.exists() else {}
-    template = {**json.loads(text(ASSETS / "settings.json")), **(ADVISOR if routing else {})}
+    template = {**json.loads(text(ASSETS / "settings.json")), **({"advisorModel": advisor} if advisor else {})}
     for key, value in template.items():
         if key != "permissions":
             settings.setdefault(key, value)
@@ -114,7 +113,7 @@ def init(root, args):
         for asset, target in {**ADAPTER, **(ROUTING if args.routing else {})}.items():
             path = root / target
             if asset == "settings.json":
-                merged = merged_settings(path, args.routing)
+                merged = merged_settings(path, args.advisor if args.routing else None)
                 if path.exists() and merged == json.loads(text(path)):
                     kept.append(target)
                 else:
@@ -183,6 +182,7 @@ def main(argv=None):
         if command is init:
             sub.add_argument("--claude", action="store_true", help="add the Claude Code adapter")
             sub.add_argument("--routing", action="store_true", help="add model routing for Claude Code")
+            sub.add_argument("--advisor", default="fable", help="advisor model that --routing sets (default: fable)")
             sub.add_argument("--gitignore", action="store_true", help="add the template's .gitignore lines")
     args = parser.parse_args(argv)
     try:

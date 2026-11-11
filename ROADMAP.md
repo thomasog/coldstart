@@ -4,7 +4,7 @@
 
 coldstart exists so that instructions, the handoff and memory travel with a folder. Which model does which work, and when to ask a stronger model for advice, is closer to a personal working style: it is much the same in every folder and it changes with each model generation.
 
-So since 1.4.0 setup asks once, and the default is no. A yes writes config only: helper agents with a model and effort, and the advisor setting. No delegation prose goes into `AGENTS.md`.
+So since 1.4.0 setup asks once, and the default is no. A yes writes config only: helper agents with a default model, and the advisor setting. No delegation prose goes into `AGENTS.md`.
 
 Not tested yet:
 

@@ -146,6 +146,10 @@ class Init(FolderTest):
         self.assertEqual(report["created"] + report["merged"], [])
         self.assertEqual(self.run_cli("check")[0], 0)
 
+    def test_routing_takes_the_advisor_it_is_given(self):
+        self.run_cli("init", "--routing", "--advisor", "opus")
+        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
+
     def test_routing_keeps_the_advisor_the_user_chose(self):
         self.write(".claude/settings.json", '{"advisorModel": "opus"}')
         self.run_cli("init", "--routing")

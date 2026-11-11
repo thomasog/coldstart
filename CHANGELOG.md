@@ -4,8 +4,8 @@
 
 - Model routing is now one question at setup, and the default is no. Before, `scout` came with the Claude Code adapter and the close suggested `/advisor`.
 - With a yes, the project gets three helpers as config, never as prose in AGENTS.md: `scout` (cheapest model), the new `worker` (mid model, for mechanical work that is fully specified) and an advisor (stronger model, for when the agent is stuck).
-  - Claude Code: `init --routing` writes the two agent files and sets `advisorModel` to `fable` in `.claude/settings.json`, keeping a value you already have. Fable can bill usage credits.
-  - The helper files set a default model and no effort: the agent that calls one picks the effort for the task.
+  - Claude Code: `init --routing` writes the two agent files and sets `advisorModel` in `.claude/settings.json` to the model one step above the one running setup (`--advisor`, default `fable`), keeping a value you already have. Fable can bill usage credits.
+  - The helper files set a default model and no effort: the agent that calls one chooses the model and the effort for the task.
   - Codex, Gemini CLI, Cursor and Copilot: the agent writes the same helpers from that tool's official page, shows them first, and notes any versioned model name in memory. This path has no automatic test.
 - Folders set up earlier keep their `scout.md`; nothing is removed.
 

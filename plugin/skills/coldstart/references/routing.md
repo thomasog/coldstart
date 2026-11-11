@@ -1,6 +1,6 @@
 # Model routing
 
-Read this only when the user said yes to routing. It gives the project three helpers, as config and never as prose in AGENTS.md. Each file sets a default model and no effort: the agent that calls a helper picks the effort, and may pass another model, for each task.
+Read this only when the user said yes to routing. It gives the project three helpers, as config and never as prose in AGENTS.md. Each helper file sets a default model and no effort: the agent that calls a helper chooses the cheapest model that can do the task, and the effort, for each call.
 
 | Role | Model tier | Text |
 |---|---|---|
@@ -12,17 +12,17 @@ Write them only for the agents the user named.
 
 ## Claude Code
 
-`coldstart.py init <folder> --routing` does all of it and includes the adapter:
+`coldstart.py init <folder> --routing --advisor <model>` does all of it and includes the adapter. The advisor is one step above the model you are running on now: `sonnet` if you are Haiku, `opus` if you are Sonnet, `fable` if you are Opus or Fable or can't tell.
 
 - It writes `.claude/agents/scout.md` and `.claude/agents/worker.md`.
-- It sets `"advisorModel": "fable"` in `.claude/settings.json`, which turns on the built-in advisor. Claude calls it on its own when an error recurs, before choosing an approach and before declaring done. A value the user already has is kept.
+- It sets `advisorModel` to that model in `.claude/settings.json`, which turns on the built-in advisor. Claude calls it on its own when an error recurs, before choosing an approach and before declaring done. A value the user already has is kept.
 
 Write no `advisor` agent file for Claude Code: the built-in one sees the whole conversation.
 
 Tell the user in your close:
-- The advisor is Fable. It can bill usage credits, needs Fable access, and stays off until they have accepted that billing once with `/model fable`.
+- Which model the advisor is, and that it uses more of their plan. If it is Fable: it can bill usage credits, needs Fable access, and stays off until they have accepted that billing once with `/model fable`.
 - The setting applies to everyone who opens the folder.
-- To change it to `"opus"` or remove it, they edit `advisorModel` in `.claude/settings.json`. A session running on Fable ignores an Opus advisor.
+- To change or remove it, they edit `advisorModel` in `.claude/settings.json`. An advisor weaker than the session's model is ignored, so someone who moves to a stronger main model should raise it.
 
 ## Other agents
 

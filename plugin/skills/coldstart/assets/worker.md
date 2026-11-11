@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Mid-cost helper for mechanical work that is fully specified: a rename, the same edit across many files, a format conversion, running the checks and fixing what they report. Use it when no design decision is left. Give it the exact files and what done looks like, then review what it changed. When you call it, set the effort the task needs, and pass a stronger model only if this one falls short.
+description: Mid-cost helper for mechanical work that is fully specified: a rename, the same edit across many files, a format conversion, running the checks and fixing what they report. Use it when no design decision is left. Give it the exact files and what done looks like, then review what it changed. It runs on Sonnet unless you pass another model: when you call it, choose the cheapest model that can do the task and the effort it needs.
 model: sonnet
 ---
 
