@@ -21,9 +21,9 @@ So the graders in those cases accept that one gap and nothing more:
 ## Steps on a Mac
 
 1. Have Claude Code installed and signed in (`claude --version`; the cases were written on 2.1.318 and last run on 2.1.321), and `python3` on the PATH.
-2. Get the branch to test:
+2. Get the branch to test, `main` or a release branch such as `release-1.5.0`:
    ```bash
-   git fetch origin && git checkout release-1.4.0 && git pull
+   git fetch origin && git checkout main && git pull
    ```
 3. Run the script's own tests first; they take a few seconds and cost nothing:
    ```bash
