@@ -11,7 +11,9 @@ The product is the folder. An earlier version told the agent to choose the proje
 Anthropic's guidance is to "prefer scripts for deterministic operations", and the Agent Skills spec asks for self-contained scripts with no prompts, `--help`, JSON output and clear exit codes (https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices, https://agentskills.io/skill-creation/using-scripts).
 
 - **The script handles what has one right answer:** listing, copying without overwriting, and checking the result. It launches no other program, so a `git` planted in the folder can't run, and the agent runs `git init`. It aborts before writing if anything is missing or unreadable, and repeat runs change nothing.
+- **A refused write is handed back, not fatal.** Claude Code's Bash sandbox refuses writes to Claude's own settings files, so `init` writes the rest and returns `.claude/settings.json` under `blocked`. The agent writes it with its file tool, which asks the user. Any other write error still aborts.
 - **The agent handles what needs judgment:** the interview, merging instructions, and writing in the user's language.
+- **Only an OK to the plan counts.** A prompt that says no one can answer, or to treat it as the reply to anything, read as leave to proceed for agents on Claude Code 2.1.321, with 1.3.0 as well. Old instructions are exactly where an injected command would hide, so silence is never consent.
 - **Python's standard library** is the least bad runtime: no installs, and readable by reviewers. Windows doesn't ship Python and agents' shells differ, so each docstring doubles as the by-hand fallback.
 
 ## Nothing comes from outside the folder
