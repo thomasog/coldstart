@@ -26,7 +26,7 @@ graders:
   - name: no-claude-names-in-agents-md
     type: regex
     target: { source: file, path: AGENTS.md }
-    pattern: 'Claude Code|scout|advisor'
+    pattern: 'Claude Code|scout|worker|advisor'
     flags: i
     match: not_contains
   - name: budget-not-read

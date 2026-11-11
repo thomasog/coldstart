@@ -11,7 +11,7 @@ execution:
   prompt: |
     run coldstart for this project, it is my apartment move
 
-    There is no live user. Treat this as the reply to anything you need to ask: Goal: moving apartments, done when I am living there. People: me and my partner, Ana. Deadlines: keys on December 15. Constraints: a budget of $6,000.00. First task: get quotes from three movers. Agents: Claude Code. Verification: amounts match the contract and dates are confirmed with the movers. Git: no. Plan: approved.
+    There is no live user. Treat this as the reply to anything you need to ask: Goal: moving apartments, done when I am living there. People: me and my partner, Ana. Deadlines: keys on December 15. Constraints: a budget of $6,000.00. First task: get quotes from three movers. Agents: Claude Code. Routing: no. Verification: amounts match the contract and dates are confirmed with the movers. Git: no. Plan: approved.
 graders:
   - name: skill-fired
     type: tool_used
@@ -22,7 +22,11 @@ graders:
     target: files
     pattern: '^.+$'
     flags: m
-    match: "count:7"
+    match: "count:5"
+  - name: no-routing
+    type: file_exists
+    path: ".claude/agents/**"
+    exists: false
   - name: no-gitignore
     type: file_exists
     path: .gitignore

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 - 2026-11-11
+
+- Model routing is now one question at setup, and the default is no. Before, `scout` came with the Claude Code adapter and the close suggested `/advisor`.
+- With a yes, the project gets three helpers as config, never as prose in AGENTS.md: `scout` (cheapest model), the new `worker` (mid model, for mechanical work that is fully specified) and an advisor (stronger model, for when the agent is stuck).
+  - Claude Code: `init --routing` writes the two agent files and sets `advisorModel` in `.claude/settings.json`, keeping a value you already have.
+  - Codex, Gemini CLI, Cursor and Copilot: the agent writes the same helpers from that tool's official page, shows them first, and notes any versioned model name in memory. This path has no automatic test.
+- Folders set up earlier keep their `scout.md`; nothing is removed.
+
 ## 1.3.0 - 2026-11-11
 
 - The AGENTS.md template is written for models that follow instructions literally:

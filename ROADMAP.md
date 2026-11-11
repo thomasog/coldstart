@@ -1,15 +1,19 @@
 # Roadmap
 
-## Next: model routing leaves the folder
+## Now: model routing is opt-in (1.4.0)
 
-coldstart exists so that instructions, the handoff and memory travel with a folder. Which model does which work, at what effort, and when to ask a stronger model for advice is a personal working style: it is the same in every folder, it belongs to one person, and it changes with each model generation. A folder set up once is never rewritten, so anything of that kind written into it goes stale there.
+coldstart exists so that instructions, the handoff and memory travel with a folder. Which model does which work, and when to ask a stronger model for advice, is closer to a personal working style: it is much the same in every folder and it changes with each model generation.
 
-So in the next version the folder carries project truth only: `AGENTS.md`, `.ai/`, the Claude Code import adapter and the portability settings. Two things that 1.3.0 still ships come out:
+So since 1.4.0 setup asks once, and the default is no. A yes writes config only: helper agents with a model and effort, and the advisor setting. No delegation prose goes into `AGENTS.md`.
 
-- `.claude/agents/scout.md`;
-- the closing line that suggests `/advisor`.
+Not tested yet:
 
-1.3.0 deliberately adds nothing more of this kind and writes no personal or global setting.
+- The path for Codex, Gemini CLI, Cursor and Copilot, which writes agent files from each tool's official page at setup. Run it by hand in each tool, then add an eval if one can run without the network.
+- Whether the three helpers change results for the better. Measure with an eval before adding anything more.
+
+## Later: a home outside the folder
+
+For people who want the same routing in every project, the folder is the wrong place. The notes below are for that.
 
 ## Where the working style can live instead
 
@@ -31,9 +35,8 @@ Researched on 2026-11-11 against the Claude Code docs. Re-check before building.
 - How a personal plugin gets turned on for a claude.ai account.
 - Whether `CLAUDE_CODE_SUBAGENT_MODEL` reaches the built-in Explore agent.
 - Whether a project agent overrides a user or plugin agent of the same name.
-- How to tell users of folders that already have `scout.md` to remove it, since `init` never overwrites.
 - Whether a line telling the main session to delegate changes behavior for the better. Anthropic's guide for Fable 5.2 warns that such lines can cause more subagents than needed, so measure it with an eval first.
 
 ## Other agents
 
-Codex has no built-in advisor. A request for one is open and unanswered (https://github.com/openai/codex/issues/36837). Its custom agents pin a versioned model ID, which would age in a folder. Nothing for coldstart to write until that changes.
+Codex has no built-in advisor. A request for one is open and unanswered (https://github.com/openai/codex/issues/36837), so there the advisor is a custom agent, and Codex starts custom agents only when asked. Its agent files and Gemini CLI's pin a versioned model name, which is why coldstart writes them at setup and records the name in memory.

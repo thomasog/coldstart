@@ -133,6 +133,29 @@ class Init(FolderTest):
         self.run_cli("init", "--claude")
         for target in coldstart.ADAPTER.values():
             self.assertTrue((self.root / target).is_file(), target)
+        self.assertFalse((self.root / ".claude/agents").exists())
+        self.assertNotIn("advisorModel", json.loads(self.read(".claude/settings.json")))
+
+    def test_routing_adds_the_helpers_and_the_advisor_and_can_repeat(self):
+        self.finished_folder()
+        self.run_cli("init", "--routing")
+        for target in (*coldstart.ADAPTER.values(), *coldstart.ROUTING.values()):
+            self.assertTrue((self.root / target).is_file(), target)
+        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
+        _, report = self.run_cli("init", "--routing")
+        self.assertEqual(report["created"] + report["merged"], [])
+        self.assertEqual(self.run_cli("check")[0], 0)
+
+    def test_routing_keeps_the_advisor_the_user_chose(self):
+        self.write(".claude/settings.json", '{"advisorModel": "fable"}')
+        self.run_cli("init", "--routing")
+        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "fable")
+
+    def test_every_helper_sets_its_model_and_effort(self):
+        for asset in coldstart.ROUTING:
+            frontmatter = (coldstart.ASSETS / asset).read_text(encoding="utf-8").split("---")[1]
+            self.assertRegex(frontmatter, r"(?m)^model: (haiku|sonnet)$", asset)
+            self.assertRegex(frontmatter, r"(?m)^effort: \w+$", asset)
 
     def test_never_overwrites_and_can_repeat(self):
         self.write(".claude/CLAUDE.md", "mine")
@@ -315,7 +338,7 @@ class Check(FolderTest):
         self.assert_problem("missing: .claude/settings.json")
         self.assert_problem("move to .ai/archive/: CLAUDE.md")
 
-    def test_finds_the_adapter_without_scout_and_ignores_trailing_spaces(self):
+    def test_finds_the_adapter_and_ignores_trailing_spaces(self):
         self.finished_folder()
         self.write(".claude/settings.json", "{}")
         self.write(".claude/CLAUDE.md", "@../AGENTS.md  \n@../.ai/HANDOFF.md\n@../.ai/memory/MEMORY.md\r\n")
