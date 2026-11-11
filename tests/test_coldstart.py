@@ -141,21 +141,21 @@ class Init(FolderTest):
         self.run_cli("init", "--routing")
         for target in (*coldstart.ADAPTER.values(), *coldstart.ROUTING.values()):
             self.assertTrue((self.root / target).is_file(), target)
-        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
+        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "fable")
         _, report = self.run_cli("init", "--routing")
         self.assertEqual(report["created"] + report["merged"], [])
         self.assertEqual(self.run_cli("check")[0], 0)
 
     def test_routing_keeps_the_advisor_the_user_chose(self):
-        self.write(".claude/settings.json", '{"advisorModel": "fable"}')
+        self.write(".claude/settings.json", '{"advisorModel": "opus"}')
         self.run_cli("init", "--routing")
-        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "fable")
+        self.assertEqual(json.loads(self.read(".claude/settings.json"))["advisorModel"], "opus")
 
-    def test_every_helper_sets_its_model_and_effort(self):
+    def test_every_helper_sets_a_model_and_leaves_effort_to_the_caller(self):
         for asset in coldstart.ROUTING:
             frontmatter = (coldstart.ASSETS / asset).read_text(encoding="utf-8").split("---")[1]
             self.assertRegex(frontmatter, r"(?m)^model: (haiku|sonnet)$", asset)
-            self.assertRegex(frontmatter, r"(?m)^effort: \w+$", asset)
+            self.assertNotRegex(frontmatter, r"(?m)^effort:", asset)
 
     def test_never_overwrites_and_can_repeat(self):
         self.write(".claude/CLAUDE.md", "mine")

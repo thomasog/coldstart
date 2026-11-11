@@ -22,7 +22,7 @@ INSTRUCTIONS = (
 )
 ADAPTER = {"CLAUDE.md": ".claude/CLAUDE.md", "settings.json": ".claude/settings.json"}
 ROUTING = {"scout.md": ".claude/agents/scout.md", "worker.md": ".claude/agents/worker.md"}
-ADVISOR = {"advisorModel": "opus"}
+ADVISOR = {"advisorModel": "fable"}
 REQUIRED = ("AGENTS.md", ".ai/HANDOFF.md", ".ai/memory/MEMORY.md")
 IMPORTS = ("@../AGENTS.md", "@../.ai/HANDOFF.md", "@../.ai/memory/MEMORY.md")
 SKIPPED_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", "target", ".cache"}

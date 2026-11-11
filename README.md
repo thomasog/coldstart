@@ -54,13 +54,13 @@ During setup coldstart asks once whether you want model routing. The default is 
 
 If you say yes, the project gets three helpers, as config files and not as instructions:
 
-- **`scout`:** bulk reading, search and images on the cheapest model.
-- **`worker`:** mechanical work that is fully specified, on a mid-priced model.
+- **`scout`:** bulk reading, search and images, on the cheapest model by default.
+- **`worker`:** mechanical work that is fully specified, on a mid-priced model by default. The agent that calls a helper picks the effort for each task.
 - **`advisor`:** a second opinion from a stronger model when the agent is stuck.
 
 What is written depends on the agents you named:
 
-- **Claude Code:** two files in `.claude/agents/`, and `advisorModel` in `.claude/settings.json`, which turns on Claude Code's built-in advisor for everyone who opens the folder. The advisor uses more of your plan.
+- **Claude Code:** two files in `.claude/agents/`, and `advisorModel` in `.claude/settings.json`, which turns on Claude Code's built-in advisor for everyone who opens the folder. The advisor is Fable, which can bill usage credits; change it to `opus` in that file if you prefer.
 - **Codex, Gemini CLI, Cursor, Copilot:** the agent opens that tool's official documentation page, writes the same three helpers in its format with its current models, and shows them to you before writing. This path has no automatic test yet. Codex uses the helpers only when you ask for them by name.
 
 Say no if you already route models in your own config.
