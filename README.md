@@ -125,7 +125,10 @@ With a yes, `AGENTS.md` gets a short `Delegation` section that tells the agent t
 
 - give each piece of work to the lowest model tier that gets it right, and choose the effort;
 - keep design, trade-offs and anything hard to undo for itself, and check what it delegated;
-- redo a weak result one tier up, and ask a tier above its own when it is stuck.
+- redo a weak result one tier up, and ask a tier above its own when it is stuck;
+- propose broad work for several agents (an audit, a change across many files, research to cross-check) with its rough size and cost, and start it only when you say go.
+
+That last line doesn't authorize anything by itself. In Claude Code, a dynamic workflow starts only when you ask in the conversation, type `ultracode`, or turn ultracode on yourself; your go to the proposal is that ask. In Codex, which starts subagents when `AGENTS.md` asks for delegation, the line keeps it from starting them without asking.
 
 The tiers are relative to whatever model is running, so the same text works with Opus one day and Sonnet the next, and in any agent that reads `AGENTS.md`. It names no model and writes no settings.
 

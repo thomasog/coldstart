@@ -3,7 +3,7 @@ name: coldstart
 description: Set up a project folder (a code repo or a personal project such as a move, a trip or paperwork) so any AI agent can pick it up cold. Run it only when the user explicitly asks for it by name, in any language, for example "/coldstart", "$coldstart" or "run coldstart". Do not start it on your own because a folder is new, empty or messy, or because the user mentions AGENTS.md, memory or organizing files.
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Coldstart
@@ -53,7 +53,7 @@ Ask in a single message, and only about the setup. Questions about the project's
 - **People, deadlines and constraints** that matter, if any.
 - **First task:** what the user wants to do first in this folder, in their words.
 - **Agents:** which ones they will use here. Assume the one running this skill unless they say otherwise.
-- **Routing:** whether AGENTS.md should tell agents to hand simple work to lower model tiers and to ask a higher one when stuck. The default is no; suggest no to anyone who already routes models in their own config.
+- **Routing:** whether AGENTS.md should tell agents to hand simple work to lower model tiers, to ask a higher one when stuck, and to propose broad work for several agents and wait for a go. The default is no; suggest no to anyone who already routes models in their own config.
 - **Verification:** how to tell work is correct. Confirm the commands you found; if there are none, ask what the user checks (for a move, perhaps "values match the contract"). If they name nothing, `Done when` is deleted.
 - **Git:** if `git` is null, yes or no. If it names this folder, don't ask. If it names a folder above, say so and follow the user's answer.
 

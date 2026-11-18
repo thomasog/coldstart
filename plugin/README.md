@@ -20,7 +20,7 @@ claude plugin install coldstart@thomasog-plugins
 
 Ask for it by name, for example `/coldstart`. It never starts on its own. In a folder that is already set up, it only checks the files and stops.
 
-Setup asks once whether you want model routing; the default is no. A yes adds a short `Delegation` section to `AGENTS.md` and writes no settings.
+Setup asks once whether you want model routing; the default is no. A yes adds a short `Delegation` section to `AGENTS.md` and writes no settings. It includes a line that has the agent propose broad multi-agent work, with its rough size and cost, and start it only on your go.
 
 ## What it reads, writes and runs
 
