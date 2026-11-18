@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 - 2026-11-18
+
+- With a yes to routing, the `Delegation` section has one more line, "Broad work waits for a yes". When work splits into many independent parts (an audit, a change across many files, research to cross-check), the agent proposes a run with several agents, with its rough size and cost, and starts it only when the user says go in the conversation. While it runs, the agent lists the work first, keeps readers read-only, tries a small slice first, and says what any cap left out.
+  - It doesn't authorize multi-agent runs. Claude Code doesn't take AGENTS.md as an opt-in for dynamic workflows. In Codex the line keeps the agent from starting subagents without asking.
+  - Nothing is written to `.claude/settings.json`. The `ultracode` setting is personal and stays out of the folder.
+- The routing question at setup mentions the new line.
+
+### Evals
+
+- `routing-accepted` checks for the new line (`broad-work-waits`).
+
 ## 1.4.0 - 2026-11-11
 
 - Model routing is now one question at setup, and the default is no.

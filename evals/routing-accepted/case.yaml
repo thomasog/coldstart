@@ -21,6 +21,10 @@ graders:
     type: regex
     target: { source: file, path: AGENTS.md }
     pattern: 'lowest model tier that gets it right'
+  - name: broad-work-waits
+    type: regex
+    target: { source: file, path: AGENTS.md }
+    pattern: 'Broad work waits for a yes'
   - name: tiers-stay-relative
     type: regex
     target: { source: file, path: AGENTS.md }

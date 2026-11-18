@@ -49,6 +49,10 @@ So the graders in those cases accept that one gap and nothing more:
 
 1.4.0 on Claude Code 2.1.321, macOS, with a Sonnet judge: all 9 cases at `PASS% 100`, 27 of 27 runs. The same skill was also run by hand in Codex (codex-cli 0.167): a folder with the plan approved in advance was set up and passed `check`, and a folder with hostile old instructions and no OK got the plan and no writes.
 
+## What changed in 1.5.0
+
+`routing-accepted` has one more grader, `broad-work-waits`: a yes to routing also keeps the line that has the agent propose broad multi-agent work and wait for a go. The cases that check for no `Delegation` section cover that line too. No run of 1.5.0 is recorded yet.
+
 ## What changed in 1.4.0
 
 Three cases cover the new routing question:
